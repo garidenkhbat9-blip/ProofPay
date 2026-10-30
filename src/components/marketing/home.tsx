@@ -15,12 +15,10 @@ export function HomePage() {
           <Link href={"/product"}>{"Product"}</Link>
           <Link href={"/how-it-works"}>{"How it works"}</Link>
           <Link href={"/faq"}>{"FAQ"}</Link>
-          <Link href="/judge-access">Judge Access</Link>
         </nav>
         <div className={"navaccount"}>
-          <Link href={"/login"}>{"Sign in"}</Link>
-          <Link className={"buttonlike forest"} href={"/signup"}>
-            {"Get started "}
+          <Link className={"buttonlike forest"} href={"/explore"}>
+            {"Explore ProofPay "}
             <svg className={"icon"} viewBox={"0 0 24 24"} aria-hidden={"true"}>
               <path d={"M5 12h14M14 7l5 5-5 5"}></path>
             </svg>
@@ -47,23 +45,21 @@ export function HomePage() {
           {"Move forward with confidence, on both sides."}
         </p>
         <div className={"herobuttons"}>
-          <Link className={"buttonlike forest"} href={"/signup"}>
+          <Link className={"buttonlike forest"} href={"/explore"}>
             {"Get started "}
             <svg className={"icon"} viewBox={"0 0 24 24"} aria-hidden={"true"}>
               <path d={"M5 12h14M14 7l5 5-5 5"}></path>
             </svg>
           </Link>
-          <Link className={"buttonlike quietbutton"} href={"/demo"}>
-            {"Explore simulated demo "}
+          <Link className={"buttonlike quietbutton"} href={"/how-it-works"}>
+            {"How it works "}
             <svg className={"icon"} viewBox={"0 0 24 24"} aria-hidden={"true"}>
               <path d={"M5 12h14M14 7l5 5-5 5"}></path>
             </svg>
           </Link>
         </div>
         <span className={"herotiny"}>
-          <Link href="/judge-access">
-            Here for the hackathon? Explore Judge Access ↗
-          </Link>
+          Choose your perspective. Secure access to the real workspace.
         </span>
         <div className={"hero-orbit"} aria-hidden={"true"}></div>
       </section>
@@ -477,8 +473,8 @@ export function HomePage() {
             }
           </p>
           <div className={"rolebuttons"}>
-            <Link href={"/demo?role=client"} className={"buttonlike"}>
-              {"Client preview "}
+            <Link href={"/explore#client"} className={"buttonlike"}>
+              {"Explore as Client "}
               <svg
                 className={"icon"}
                 viewBox={"0 0 24 24"}
@@ -487,8 +483,8 @@ export function HomePage() {
                 <path d={"M5 12h14M14 7l5 5-5 5"}></path>
               </svg>
             </Link>
-            <Link href={"/demo?role=freelancer"} className={"buttonlike"}>
-              {"Freelancer preview "}
+            <Link href={"/explore#freelancer"} className={"buttonlike"}>
+              {"Explore as Freelancer "}
               <svg
                 className={"icon"}
                 viewBox={"0 0 24 24"}
@@ -569,7 +565,7 @@ export function HomePage() {
           <br />
           {"a better one."}
         </h2>
-        <Link href={"/signup"} className={"buttonlike forest"}>
+        <Link href={"/explore"} className={"buttonlike forest"}>
           {"Get started "}
           <svg className={"icon"} viewBox={"0 0 24 24"} aria-hidden={"true"}>
             <path d={"M5 12h14M14 7l5 5-5 5"}></path>
@@ -577,7 +573,7 @@ export function HomePage() {
         </Link>
         <p>
           {
-            "Explore the workspace preview while live integrations are in development."
+            "Choose a perspective to explore the real workspace with your own account."
           }
         </p>
       </section>
@@ -608,9 +604,8 @@ export function HomePage() {
         </div>
         <div>
           <strong>{"Workspace"}</strong>
-          <Link href={"/demo"}>{"Open preview"}</Link>
-          <Link href={"/login"}>{"Sign in"}</Link>
-          <Link href={"/signup"}>{"Create account"}</Link>
+          <Link href={"/explore"}>{"Explore ProofPay"}</Link>
+          <Link href={"/demo"}>{"Simulated demo"}</Link>
         </div>
         <div className={"footerstatus"}>
           <span className={"microtag"}>
@@ -618,9 +613,9 @@ export function HomePage() {
             {" IN DEVELOPMENT"}
           </span>
           <p>
-            {"Explore the interactive preview."}
+            {"PayPal Sandbox · test payments only."}
             <br />
-            {"AI verification and payments are not connected."}
+            {"Automated evidence verification is not connected."}
           </p>
         </div>
         <div className={"footerbase"}>

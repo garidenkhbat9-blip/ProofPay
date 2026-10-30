@@ -202,8 +202,8 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               <span>03</span>Approve work before requesting payment
             </li>
           </ol>
-          <Link className="auth-judge-link" href="/judge-access">
-            Explore Judge Access <span aria-hidden="true">↗</span>
+          <Link className="auth-judge-link" href="/explore">
+            Explore ProofPay <span aria-hidden="true">↗</span>
           </Link>
         </section>
         <section className="authcard">
@@ -211,7 +211,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             <div className="auth-judge-context">
               <Icon name="shield" />
               <span>
-                Judge Access ·{" "}
+                Explore ProofPay ·{" "}
                 {(signup ? role : requestedRole) === "freelancer"
                   ? "Freelancer"
                   : "Client"}{" "}

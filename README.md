@@ -4,9 +4,9 @@ A native **Next.js 16.4.2 App Router + React 19.3.1 + TypeScript** migration of 
 
 This is editable React source, not a wrapper around the old `dist/app.js`. There is no embedded legacy script or `dangerouslySetInnerHTML` application renderer.
 
-## Judge Access
+## Explore ProofPay
 
-Open `/judge-access` for the Client/Freelancer entry choices. Both use normal Supabase authentication with the judge's own account. `/judge-workspace` shows real, designated project records after authentication or an actionable setup state. It does not create an account, impersonate another user, seed evidence, approve work, or execute payments. See [JUDGE-ACCESS.md](JUDGE-ACCESS.md) for account isolation, project designation, setup and validation limitations.
+Public onboarding follows **Landing → `/explore` → Client/Freelancer → secure login → `/judge-workspace`**. Normal Login/Signup navigation is temporarily hidden from marketing pages; the auth routes, confirmation and recovery remain available. `/judge-access` redirects to `/explore` for older links. Role selection is not one-click authentication: both choices use normal Supabase authentication with the judge's own account. `/judge-workspace` shows real, designated project records after authentication or an actionable setup state. It does not create an account, impersonate another user, seed evidence, approve work, or execute payments. See [JUDGE-ACCESS.md](JUDGE-ACCESS.md) for account isolation, project designation, setup and validation limitations.
 
 The white Quiet Precision design is refined in `src/app/precision.css`, keeping the existing logo and local DM Sans/Manrope font families. Existing demo routes remain separate and simulated.
 

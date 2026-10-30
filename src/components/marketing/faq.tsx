@@ -20,9 +20,8 @@ export function FaqPage() {
           <Link href={"/faq"}>{"FAQ"}</Link>
         </nav>
         <div className={"navaccount"}>
-          <Link href={"/login"}>{"Sign in"}</Link>
-          <Link className={"buttonlike forest"} href={"/signup"}>
-            {"Get started "}
+          <Link className={"buttonlike forest"} href={"/explore"}>
+            {"Explore ProofPay "}
             <svg className={"icon"} viewBox={"0 0 24 24"} aria-hidden={"true"}>
               <path d={"M5 12h14M14 7l5 5-5 5"}></path>
             </svg>
@@ -160,7 +159,7 @@ export function FaqPage() {
           <br />
           {"a better one."}
         </h2>
-        <Link href={"/signup"} className={"buttonlike forest"}>
+        <Link href={"/explore"} className={"buttonlike forest"}>
           {"Get started "}
           <svg className={"icon"} viewBox={"0 0 24 24"} aria-hidden={"true"}>
             <path d={"M5 12h14M14 7l5 5-5 5"}></path>
@@ -202,9 +201,8 @@ export function FaqPage() {
         </div>
         <div>
           <strong>{"Workspace"}</strong>
-          <Link href={"/demo"}>{"Open preview"}</Link>
-          <Link href={"/login"}>{"Sign in"}</Link>
-          <Link href={"/signup"}>{"Create account"}</Link>
+          <Link href={"/explore"}>{"Explore ProofPay"}</Link>
+          <Link href={"/demo"}>{"Simulated demo"}</Link>
         </div>
         <div className={"footerstatus"}>
           <span className={"microtag"}>

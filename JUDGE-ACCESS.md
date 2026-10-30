@@ -1,8 +1,20 @@
-# ProofPay Judge Access — delivery and setup
+# Explore ProofPay — delivery and setup
+
+## Public exploration update
+
+The preferred entry URL is now `/explore`, titled **Explore ProofPay**, with **Choose your perspective** and Client/Freelancer cards. `/judge-access` is a backward-compatible redirect. Marketing navigation, Get started and prominent workspace CTAs now lead to Explore; normal Login/Signup links are hidden on those public pages. The simulated demo is retained as a labelled footer link instead of a primary CTA. Auth-page navigation also uses the new public name.
+
+The role cards still point to `/login?next=%2Fjudge-workspace%3Fperspective%3Dclient` or the freelancer equivalent. Login, signup, email confirmation, recovery, session handling, project selection and membership logic are unchanged by this update. Active workspaces are not globally redirected. Authentication is still required; there is no passwordless or one-click entry. Existing setup requirements below are unchanged.
+
+Files changed in this update: `src/app/explore/page.tsx`, `src/app/judge-access/page.tsx`, `src/app/precision.css`, `src/components/auth-form.tsx` (copy/link only), the four components under `src/components/marketing/`, `README.md` and this document. No schema, account data, integration, payment or authorization code changed.
+
+Validation: `npm run typecheck`, all 72 existing tests and `npm run build` passed. Browser/native UI inspection was attempted, but Computer Use stopped because it could not confidently determine Chrome's current URL. No new visual or keyboard QA is claimed. Responsive card layout, native keyboard-operable links, focus indicators and reduced-motion CSS are retained; actual 375px/768px/1440px rendering and live authentication still need verification.
+
+Production HTTP checks passed for all four marketing pages: Explore CTAs are present, Login/Signup links are absent, and demo links appear only in footers. `/explore` renders both role choices and their encoded login return destinations. `/judge-access` returns **307 → `/explore`**, without a loop. Direct login, signup, forgot/reset-password, demo and both judge-workspace role URLs still return 200. These HTTP checks do not verify browser interaction or a successful authenticated session. `git diff --check` also passed.
 
 ## IMPLEMENTED
 
-- `/judge-access`: public, responsive Client/Freelancer choices with normal sign-in, clear access instructions and a separate simulated demo link.
+- `/explore`: public, responsive Client/Freelancer choices with normal sign-in, clear access instructions and a secondary simulated demo link. `/judge-access` redirects here.
 - `/judge-workspace`: existing authenticated workspace shell, current account and perspective, designated project selector, current agreement version/acceptance, latest submitted evidence and human approval counts, a membership-aware next action, and recorded PayPal Sandbox invoice status.
 - Missing configuration, invitations, membership or records produce setup instructions. Failed reads produce unavailable/retry states. Nothing creates a sample record, AI report, approval or payment on entry.
 - Login/signup retain Supabase Auth. Judge destinations survive the login/signup link and signup email confirmation; explicit return links take priority over an older tab-local return path. Choosing another signup perspective updates the judge destination. Normal signup confirmation URLs remain unchanged.
@@ -64,7 +76,8 @@ Real two-account auth/RLS/private upload/review tests, deployed email confirmati
 
 | File | Purpose |
 | --- | --- |
-| `src/app/judge-access/page.tsx` | Public entry page and instructions |
+| `src/app/explore/page.tsx` | Public entry page and instructions |
+| `src/app/judge-access/page.tsx` | Backward-compatible redirect to Explore |
 | `src/app/(workspace)/judge-workspace/page.tsx` | Server configuration and judge route |
 | `src/components/judge-workspace.tsx` | Real onboarding/status and setup states |
 | `src/lib/judge-access.ts` | Role parsing, designation/membership intersection, current progress |

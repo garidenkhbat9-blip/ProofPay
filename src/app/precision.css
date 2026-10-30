@@ -72,9 +72,9 @@ button.primary:hover,
   object-fit: contain;
 }
 
-/* Public judge entry */
+/* Public exploration entry; shared judge styles keep the existing workspace intact. */
 .judge-page {
-  background: #fff;
+  background: #faf9f6;
   min-height: 100vh;
 }
 .judge-header,
@@ -86,6 +86,7 @@ button.primary:hover,
   padding: 24px max(24px, calc((100vw - 1160px) / 2));
 }
 .judge-header {
+  background: #fff;
   border-bottom: 1px solid var(--line);
 }
 .judge-header .brand {
@@ -127,6 +128,12 @@ button.primary:hover,
 .judge-intro h1 span {
   color: var(--accent);
 }
+.judge-intro h2 {
+  margin: 0 0 8px;
+  font-size: 19px;
+  font-weight: 550;
+  letter-spacing: -0.3px;
+}
 .judge-intro > p {
   font-size: 17px;
   line-height: 1.8;
@@ -139,6 +146,7 @@ button.primary:hover,
   gap: 22px;
 }
 .judge-choice {
+  scroll-margin-top: 24px;
   display: flex;
   flex-direction: column;
   padding: 30px 32px 0;
