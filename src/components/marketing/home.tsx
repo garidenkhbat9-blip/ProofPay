@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 export function HomePage() {
   return (
@@ -5,11 +6,7 @@ export function HomePage() {
       <header className={"marketingnav"}>
         <Link className={"brand"} href={"/"}>
           <span className={"brandmark"}>
-            <svg className={"icon"} viewBox={"0 0 24 24"} aria-hidden={"true"}>
-              <path
-                d={"M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3M8 12l3 3 5-6"}
-              ></path>
-            </svg>
+            <Image src="/logo.png" alt="ProofPay logo" width={38} height={38} />
           </span>
           {"ProofPay"}
         </Link>
@@ -18,6 +15,7 @@ export function HomePage() {
           <Link href={"/product"}>{"Product"}</Link>
           <Link href={"/how-it-works"}>{"How it works"}</Link>
           <Link href={"/faq"}>{"FAQ"}</Link>
+          <Link href="/judge-access">Judge Access</Link>
         </nav>
         <div className={"navaccount"}>
           <Link href={"/login"}>{"Sign in"}</Link>
@@ -56,14 +54,16 @@ export function HomePage() {
             </svg>
           </Link>
           <Link className={"buttonlike quietbutton"} href={"/demo"}>
-            {"Explore workspace "}
+            {"Explore simulated demo "}
             <svg className={"icon"} viewBox={"0 0 24 24"} aria-hidden={"true"}>
               <path d={"M5 12h14M14 7l5 5-5 5"}></path>
             </svg>
           </Link>
         </div>
         <span className={"herotiny"}>
-          {"One account. Client today, freelancer tomorrow."}
+          <Link href="/judge-access">
+            Here for the hackathon? Explore Judge Access ↗
+          </Link>
         </span>
         <div className={"hero-orbit"} aria-hidden={"true"}></div>
       </section>
@@ -585,15 +585,12 @@ export function HomePage() {
         <div>
           <Link className={"brand"} href={"/"}>
             <span className={"brandmark"}>
-              <svg
-                className={"icon"}
-                viewBox={"0 0 24 24"}
-                aria-hidden={"true"}
-              >
-                <path
-                  d={"M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3M8 12l3 3 5-6"}
-                ></path>
-              </svg>
+              <Image
+                src="/logo.png"
+                alt="ProofPay logo"
+                width={38}
+                height={38}
+              />
             </span>
             {"ProofPay"}
           </Link>

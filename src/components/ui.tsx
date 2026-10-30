@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { errorMessage } from "@/lib/cloud";
 export function Icon({ name = "folder" }: { name?: string }) {
   const paths: Record<string, string> = {
@@ -19,7 +19,8 @@ export function Icon({ name = "folder" }: { name?: string }) {
       "m3 3 18 18M10 5.2A12 12 0 0 1 12 5c6.5 0 10 7 10 7a18 18 0 0 1-3 3.8M6.3 6.3A19 19 0 0 0 2 12s3.5 7 10 7a12 12 0 0 0 5.7-1.7M10 10a3 3 0 0 0 4 4",
     check: "M5 12l5 5L20 7",
     user: "M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8",
-    briefcase: "M20 7H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1ZM16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2",
+    briefcase:
+      "M20 7H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1ZM16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2",
   };
   return (
     <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -75,6 +76,7 @@ export function Modal({
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   useEffect(() => {
     ref.current?.showModal();
     const node = ref.current;
@@ -83,13 +85,14 @@ export function Modal({
   return (
     <dialog
       ref={ref}
+      aria-labelledby={titleId}
       onCancel={onClose}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div className="dialoghead">
-        <h2>{title}</h2>
+        <h2 id={titleId}>{title}</h2>
         <button className="ghost" aria-label="Close dialog" onClick={onClose}>
           <Icon name="close" />
         </button>
@@ -119,8 +122,9 @@ export function useTask() {
   return { busy, error, run, clearError: () => setError("") };
 }
 export function FormMessage({ error }: { error: string }) {
+  if (!error) return null;
   return (
-    <p className="authmessage" role="alert">
+    <p className="formerror" role="alert">
       {error}
     </p>
   );

@@ -127,7 +127,10 @@ export function Dashboard() {
   const projects = data.projects.filter(
     (p) => memberRole(data, p.id, user?.id) === perspective,
   );
-  const current = currentDeliveries(data, projects.map((p) => p.id));
+  const current = currentDeliveries(
+    data,
+    projects.map((p) => p.id),
+  );
   const waiting = current.filter((s) => s.status === "submitted").length;
   const approved = current.filter((s) => s.status === "approved").length;
   const changesReq = current.filter((s) => s.status === "changes").length;
@@ -169,9 +172,7 @@ export function Dashboard() {
       {!hasProjects ? (
         <div className="onboard">
           <div className="onboard-icon">
-            <Icon
-              name={perspective === "client" ? "folder" : "report"}
-            />
+            <Icon name={perspective === "client" ? "folder" : "report"} />
           </div>
           <h2>
             {perspective === "client"
@@ -192,7 +193,7 @@ export function Dashboard() {
             {(perspective === "client"
               ? [
                   ["Create a project", "Define the brief and budget"],
-                  ["Invite freelancer", "Send an email invitation"],
+                  ["Invite freelancer", "Invite by email inside ProofPay"],
                   ["Agree on scope", "Set milestones and criteria"],
                   ["Review & approve", "Verify and accept work"],
                 ]
@@ -247,7 +248,7 @@ export function Dashboard() {
                 <Icon name="check" />
               </div>
               <div className="dash-stat-value">{approved}</div>
-              <div className="dash-stat-foot">milestones completed</div>
+              <div className="dash-stat-foot">work accepted · not payment</div>
             </div>
             <div className="dash-stat">
               <div className="dash-stat-label">
@@ -255,7 +256,7 @@ export function Dashboard() {
                 <Icon name="wallet" />
               </div>
               <div className="dash-stat-value">{money(totalBudget)}</div>
-              <div className="dash-stat-foot">USD · not invoiced</div>
+              <div className="dash-stat-foot">USD · planned, not collected</div>
             </div>
           </div>
           <div className="dash-grid">
@@ -314,9 +315,7 @@ export function Dashboard() {
                           <strong>{p.title}</strong>
                           <p>
                             {categories[p.work_category]} ·{" "}
-                            {p.due_date
-                              ? "Due " + p.due_date
-                              : "No due date"}
+                            {p.due_date ? "Due " + p.due_date : "No due date"}
                           </p>
                         </div>
                         <span>{money(p.budget_amount)}</span>

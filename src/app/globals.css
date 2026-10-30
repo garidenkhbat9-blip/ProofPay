@@ -126,17 +126,19 @@ button.ghost {
   padding: 0 10px 29px;
 }
 .brandmark {
-  width: 29px;
-  height: 32px;
+  width: 38px;
+  height: 38px;
   display: grid;
   place-items: center;
-  background: #315E50;
-  color: white;
-  border-radius: 8px 8px 12px 12px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
 }
-.brandmark .icon {
-  width: 21px;
-  height: 21px;
+.brandmark img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  display: block;
 }
 .workspace {
   display: flex;
@@ -5195,6 +5197,262 @@ dialog .formlabel {
   flex-shrink: 0;
   margin-top: 2px;
   color: var(--accent);
+}
+
+/* ── Auth pages (login / signup / forgot / reset) ──────── */
+.authloading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-size: 14px;
+  color: var(--muted);
+}
+.authpage {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--soft);
+}
+.authpage > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 40px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+}
+.authpage > header .brand {
+  padding: 0;
+  font-size: 19px;
+}
+.authpage > header > a:last-child {
+  font-size: 13px;
+  color: var(--muted);
+}
+.authpage > header > a:last-child:hover {
+  color: var(--ink);
+}
+.authlayout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 480px;
+  align-items: stretch;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 60px 40px;
+  gap: 80px;
+}
+.authstory {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+}
+.authstory .eyebrow {
+  font-size: 11px;
+  letter-spacing: 2px;
+  font-weight: 650;
+  color: var(--accent);
+  margin-bottom: 20px;
+}
+.authstory h1 {
+  font-family: Manrope, system-ui, sans-serif;
+  font-size: 42px;
+  font-weight: 780;
+  letter-spacing: -1.5px;
+  line-height: 1.18;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+.authstory h1 span {
+  color: var(--accent);
+}
+.authstory p {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.authcard {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 36px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  box-shadow: 0 4px 24px #00000008;
+}
+.authcard > h2 {
+  font-family: Manrope, system-ui, sans-serif;
+  font-size: 22px;
+  font-weight: 750;
+  letter-spacing: -0.6px;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.authcard > p {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 26px;
+  line-height: 1.6;
+}
+.authcard form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.authfield {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+.authhint {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 5px;
+  min-height: 16px;
+  line-height: 1.4;
+}
+.authhint.is-error {
+  color: var(--danger);
+}
+.authhint.is-success {
+  color: var(--success);
+}
+.capswarning {
+  color: var(--warning);
+  font-size: 12px;
+  min-height: 14px;
+}
+.passwordcontrol {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.passwordcontrol .field {
+  padding-right: 44px;
+}
+.passwordtoggle {
+  position: absolute;
+  right: 2px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 8px;
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+}
+.passwordtoggle:hover {
+  background: transparent;
+  color: var(--ink);
+}
+.passwordtoggle .icon {
+  width: 16px;
+  height: 16px;
+}
+.authmessage {
+  font-size: 13px;
+  color: var(--success);
+  min-height: 18px;
+  margin: 6px 0 2px;
+  line-height: 1.5;
+}
+.authforgot {
+  display: block;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 14px;
+}
+.authforgot:hover {
+  color: var(--accent);
+}
+.authalternate {
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 16px;
+}
+.authalternate a {
+  color: var(--accent);
+  font-weight: 550;
+}
+.authalternate a:hover {
+  text-decoration: underline;
+}
+.authdivider {
+  text-align: center;
+  font-size: 12px;
+  color: #b0b8b4;
+  margin: 18px 0 0;
+  position: relative;
+}
+.authdivider::before,
+.authdivider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 28%;
+  height: 1px;
+  background: var(--line);
+}
+.authdivider::before { left: 0; }
+.authdivider::after  { right: 0; }
+.buttonlike {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: white;
+  color: var(--ink);
+  padding: 9px 13px;
+  font-weight: 550;
+  font-size: 14px;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.buttonlike:hover {
+  background: #f7f8fc;
+}
+.formerror {
+  font-size: 13px;
+  color: var(--danger);
+  background: #fef2f2;
+  border: 1px solid #fbd5d4;
+  border-radius: 7px;
+  padding: 10px 13px;
+  margin: 4px 0 6px;
+  line-height: 1.5;
+}
+
+/* ── Auth responsive ─────────────────────────────────── */
+@media (max-width: 860px) {
+  .authlayout {
+    grid-template-columns: 1fr;
+    padding: 36px 24px;
+    gap: 40px;
+  }
+  .authstory {
+    text-align: center;
+  }
+  .authstory h1 {
+    font-size: 32px;
+  }
+}
+@media (max-width: 520px) {
+  .authpage > header {
+    padding: 16px 20px;
+  }
+  .authcard {
+    padding: 28px 20px;
+  }
+  .authlayout {
+    padding: 24px 16px;
+  }
 }
 
 /* ── Perspective badge (sidebar) ─────────────────────── */

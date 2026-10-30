@@ -102,7 +102,7 @@ test("received work requires human review and approval never implies payment", (
   data.submissions[0].status = "approved";
   assert.equal(
     projectNextStep(data, data.projects[0], "client")?.status,
-    "Approved · payment not connected",
+    "Approved · check payment status",
   );
 });
 test("expired links and incomplete data do not present an actionable submit link", () => {

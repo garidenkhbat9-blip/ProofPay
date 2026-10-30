@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import Link from "next/link";
 import {
   useEffect,
@@ -10,6 +11,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabase } from "@/lib/supabase";
 import { safeReturn } from "@/lib/domain";
+import { judgeDestination, judgeRole } from "@/lib/judge-access";
 import { useWorkspace } from "./provider";
 import { Icon, useTask, FormMessage } from "./ui";
 import { PasswordField } from "./password-field";
@@ -28,11 +30,19 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<AuthErrors>({});
   const [submitted, setSubmitted] = useState(false);
-  const [role, setRole] = useState<"client" | "freelancer">("client");
-  const destination = safeReturn(params.get("next"));
+  const requestedDestination = safeReturn(params.get("next"));
+  const judge = requestedDestination.startsWith("/judge-workspace");
+  const requestedRole = judgeRole(
+    new URLSearchParams(requestedDestination.split("?")[1]).get("perspective"),
+  );
+  const [role, setRole] = useState<"client" | "freelancer">(
+    requestedRole || "client",
+  );
   const signup = mode === "signup",
     forgot = mode === "forgot",
     reset = mode === "reset";
+  const destination =
+    judge && signup ? judgeDestination(role) : requestedDestination;
   useEffect(() => {
     if (
       ready &&
@@ -46,9 +56,11 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         pending = sessionStorage.getItem("proofpay-next");
         sessionStorage.removeItem("proofpay-next");
       } catch {}
-      router.replace(safeReturn(pending || destination));
+      router.replace(
+        params.has("next") ? destination : safeReturn(pending || destination),
+      );
     }
-  }, [user, ready, recovery, mode, destination, router]);
+  }, [user, ready, recovery, mode, destination, params, router]);
   function validateInput(
     event: ChangeEvent<HTMLInputElement> | FocusEvent<HTMLInputElement>,
   ) {
@@ -110,7 +122,10 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 full_name: String(f.get("full_name")).trim(),
                 preferred_workspace: role,
               },
-              emailRedirectTo: location.origin + "/login",
+              emailRedirectTo:
+                location.origin +
+                "/login" +
+                (judge ? "?next=" + encodeURIComponent(destination) : ""),
             },
           });
           if (error) throw error;
@@ -155,7 +170,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       <header>
         <Link className="brand" href="/">
           <span className="brandmark">
-            <Icon name="shield" />
+            <Image src="/logo.png" alt="ProofPay logo" width={38} height={38} />
           </span>
           ProofPay
         </Link>
@@ -165,19 +180,45 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         <section className="authstory">
           <div className="eyebrow">THE TRUST LAYER FOR DIGITAL WORK</div>
           <h1>
-            Clear agreements.
+            Proof the work.
             <br />
-            Recorded decisions.
+            Build the trust.
             <br />
-            <span>Confident handoffs.</span>
+            <span>Pay with confidence.</span>
           </h1>
           <p>
             Create projects as a client. Deliver as a freelancer.
             <br />
             Your role is defined in each project.
           </p>
+          <ol className="auth-principles">
+            <li>
+              <span>01</span>Agree on a measurable outcome
+            </li>
+            <li>
+              <span>02</span>Review the evidence together
+            </li>
+            <li>
+              <span>03</span>Approve work before requesting payment
+            </li>
+          </ol>
+          <Link className="auth-judge-link" href="/judge-access">
+            Explore Judge Access <span aria-hidden="true">↗</span>
+          </Link>
         </section>
         <section className="authcard">
+          {judge && (
+            <div className="auth-judge-context">
+              <Icon name="shield" />
+              <span>
+                Judge Access ·{" "}
+                {(signup ? role : requestedRole) === "freelancer"
+                  ? "Freelancer"
+                  : "Client"}{" "}
+                view
+              </span>
+            </div>
+          )}
           <h2>
             {signup
               ? "Create your account"
@@ -194,7 +235,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 ? "We will email you a reset link."
                 : reset
                   ? "Choose a password for your account."
-                  : "Sign in to your workspace."}
+                  : judge
+                    ? "Use your own account with the email invited by the organizer."
+                    : "Sign in to your workspace."}
           </p>
           <form onSubmit={submit} noValidate aria-busy={task.busy}>
             {signup && (
@@ -202,6 +245,8 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 <div className="role-picker">
                   <button
                     type="button"
+                    aria-pressed={role === "client"}
+                    disabled={task.busy || submitted}
                     className={`role-card ${role === "client" ? "selected" : ""}`}
                     onClick={() => setRole("client")}
                   >
@@ -213,6 +258,8 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                   </button>
                   <button
                     type="button"
+                    aria-pressed={role === "freelancer"}
+                    disabled={task.busy || submitted}
                     className={`role-card ${role === "freelancer" ? "selected" : ""}`}
                     onClick={() => setRole("freelancer")}
                   >
@@ -236,7 +283,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                     maxLength={120}
                     disabled={task.busy || submitted}
                     aria-invalid={!!errors.full_name}
-                    aria-describedby={errors.full_name ? "name-error" : undefined}
+                    aria-describedby={
+                      errors.full_name ? "name-error" : undefined
+                    }
                     onChange={changeInput}
                     onBlur={validateInput}
                   />
@@ -345,7 +394,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           </p>
           <div className="authdivider">Explore without an account</div>
           <Link className="buttonlike widebutton" href="/demo">
-            Open demo workspace →
+            Explore simulated demo →
           </Link>
         </section>
       </main>

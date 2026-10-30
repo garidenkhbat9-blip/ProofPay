@@ -4,6 +4,12 @@ A native **Next.js 16.4.2 App Router + React 19.3.1 + TypeScript** migration of 
 
 This is editable React source, not a wrapper around the old `dist/app.js`. There is no embedded legacy script or `dangerouslySetInnerHTML` application renderer.
 
+## Judge Access
+
+Open `/judge-access` for the Client/Freelancer entry choices. Both use normal Supabase authentication with the judge's own account. `/judge-workspace` shows real, designated project records after authentication or an actionable setup state. It does not create an account, impersonate another user, seed evidence, approve work, or execute payments. See [JUDGE-ACCESS.md](JUDGE-ACCESS.md) for account isolation, project designation, setup and validation limitations.
+
+The white Quiet Precision design is refined in `src/app/precision.css`, keeping the existing logo and local DM Sans/Manrope font families. Existing demo routes remain separate and simulated.
+
 ## Start in Antigravity (Windows)
 
 1. Install Node.js **22 or newer** (LTS recommended).
@@ -83,13 +89,13 @@ Routes include `/`, `/product`, `/how-it-works`, `/faq`, `/login`, `/signup`, `/
 
 ## Architecture and secrets
 
-Authentication remains **browser-session based** to preserve the existing integration. Workspace data is fetched only after session initialization. No user/project data is embedded in server-rendered pages. The route guard is a UI guard, not database security: Supabase RLS and SECURITY DEFINER RPC checks remain authoritative. SSR cookie auth, server actions and backend AI/payment endpoints have not been introduced.
+Authentication remains **browser-session based** to preserve the existing integration. Workspace records are fetched only after session initialization. The route guard is a UI guard, not database security: Supabase RLS and SECURITY DEFINER RPC checks remain authoritative. SSR cookie auth and server actions have not been introduced. Existing server API routes provide authenticated Gemini agreement drafting and PayPal Sandbox invoicing/webhook handling. The judge page passes configured project IDs (not project records or credentials) to the client; the IDs do not grant access.
 
 Never put `service_role`, Supabase secret keys, Browserless tokens, Gemini keys or PayPal secrets in a `NEXT_PUBLIC_*` variable, a React component, `public/`, or Git. No privileged secret is needed for the existing features. Future server integrations should keep their secrets in backend environment variables or Supabase Edge Function Secrets. Merely adding an API key will not implement those integrations.
 
 ## Not connected yet
 
-- AI agreement generation and AI evidence explanations.
+- AI evidence explanations. Gemini agreement drafting is implemented behind server configuration; live provider behavior still needs verification in the deployed environment.
 - Browserless/Playwright automated verification and queued verification workers.
 - PayPal live payments, marketplace onboarding and arbitrary-freelancer payouts. Sandbox invoicing requires the separate payment setup described above.
 - Automatic invitation emails or push notifications.

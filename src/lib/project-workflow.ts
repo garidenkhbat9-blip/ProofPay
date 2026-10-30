@@ -185,10 +185,10 @@ export function projectNextStep(
   )
     return step({
       stage: 4,
-      status: "Approved · payment not connected",
+      status: "Approved · check payment status",
       title: "Work accepted. Payment remains a separate step.",
       description:
-        "No invoice has been issued and no payment is confirmed. PayPal must be connected before payment can be requested or marked paid.",
+        "Open payment history to check invoices and verified PayPal Sandbox status. Work approval alone does not confirm a payment.",
       label: "View payment status",
       href: "/payments",
     });

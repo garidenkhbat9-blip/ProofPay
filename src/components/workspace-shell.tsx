@@ -1,7 +1,8 @@
 "use client";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Fragment, useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { useWorkspace } from "./provider";
 import { Icon, Empty } from "./ui";
 export function WorkspaceShell({ children }: { children: ReactNode }) {
@@ -20,6 +21,57 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
     path = usePathname(),
     router = useRouter();
   const [open, setOpen] = useState(false);
+  const [mobile, setMobile] = useState(false);
+  const sidebar = useRef<HTMLElement>(null);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 720px)");
+    const update = () => {
+      setMobile(media.matches);
+      if (!media.matches) setOpen(false);
+    };
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+  useEffect(() => {
+    setOpen(false);
+  }, [path]);
+  useEffect(() => {
+    if (!mobile || !open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const controls = () =>
+      Array.from(
+        sidebar.current?.querySelectorAll<HTMLElement>(
+          "a[href], button:not(:disabled)",
+        ) || [],
+      );
+    controls()[0]?.focus();
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setOpen(false);
+      }
+      if (event.key !== "Tab") return;
+      const items = controls(),
+        first = items[0],
+        last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    };
+    document.addEventListener("keydown", keydown);
+    return () => {
+      document.body.style.overflow = previous;
+      document.removeEventListener("keydown", keydown);
+      menuButton.current?.focus();
+    };
+  }, [open, mobile]);
   useEffect(() => {
     if (!user?.id) return;
     let alive = true;
@@ -88,10 +140,28 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
   const nav = perspective === "client" ? clientNav : freelancerNav;
   return (
     <>
-      <aside className={`sidebar ${open ? "open" : ""}`}>
-        <Link className="brand" href="/dashboard">
+      <a className="skip-link" href="#workspace-main">
+        Skip to content
+      </a>
+      {mobile && open && (
+        <div
+          className="workspace-backdrop"
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+      <aside
+        id="workspace-navigation"
+        ref={sidebar}
+        className={`sidebar ${open ? "open" : ""}`}
+        inert={mobile && !open}
+        role={mobile && open ? "dialog" : undefined}
+        aria-modal={mobile && open ? true : undefined}
+        aria-label="Workspace navigation"
+      >
+        <Link className="brand" href="/dashboard" onClick={() => setOpen(false)}>
           <span className="brandmark">
-            <Icon name="shield" />
+            <Image src="/logo.png" alt="ProofPay logo" width={38} height={38} />
           </span>
           ProofPay
         </Link>
@@ -104,8 +174,10 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
         </div>
         <div className="perspective-switcher">
           <button
+            aria-pressed={perspective === "client"}
             className={`perspective-btn ${perspective === "client" ? "active" : ""}`}
             onClick={() => {
+              setOpen(false);
               setPerspective("client");
               router.push("/dashboard");
             }}
@@ -113,8 +185,10 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
             Client
           </button>
           <button
+            aria-pressed={perspective === "freelancer"}
             className={`perspective-btn ${perspective === "freelancer" ? "active" : ""}`}
             onClick={() => {
+              setOpen(false);
               setPerspective("freelancer");
               router.push("/dashboard");
             }}
@@ -127,6 +201,9 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
             key={href}
             className={`nav ${path === href || path.startsWith(href + "/") ? "active" : ""}`}
             href={href}
+            aria-current={
+              path === href || path.startsWith(href + "/") ? "page" : undefined
+            }
             onClick={() => setOpen(false)}
           >
             <Icon name={icon} />
@@ -134,7 +211,16 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           </Link>
         ))}
         <div className="sidebottom">
-          <Link className="nav" href="/settings">
+          <Link
+            className={`nav ${path === "/judge-workspace" ? "active" : ""}`}
+            href="/judge-workspace"
+            aria-current={path === "/judge-workspace" ? "page" : undefined}
+            onClick={() => setOpen(false)}
+          >
+            <Icon name="shield" />
+            Judge guide
+          </Link>
+          <Link className="nav" href="/settings" onClick={() => setOpen(false)}>
             <Icon name="gear" />
             Settings
           </Link>
@@ -154,23 +240,28 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </aside>
-      <main className="main">
+      <main className="main" inert={mobile && open}>
         <header className="topbar">
           <div className="crumb">
             <button
+              ref={menuButton}
               className="ghost mobiletoggle"
               onClick={() => setOpen(!open)}
               aria-label="Open menu"
+              aria-expanded={open}
+              aria-controls="workspace-navigation"
             >
               <Icon name="menu" />
             </button>
             <span>Workspace</span>
             <span>/</span>
             <b>
-              {path.startsWith("/handoff")
-                ? "Delivery"
-                : nav.find(([href]) => path.startsWith(href))?.[2] ||
-                  "Settings"}
+              {path === "/judge-workspace"
+                ? "Judge guide"
+                : path.startsWith("/handoff")
+                  ? "Delivery"
+                  : nav.find(([href]) => path.startsWith(href))?.[2] ||
+                    "Settings"}
             </b>
           </div>
           <div className="topright">
@@ -180,15 +271,24 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
             </span>
           </div>
         </header>
-        <div className="content">
+        <div className="content" id="workspace-main" tabIndex={-1}>
           {!loaded && loading && (
-            <div className="empty" role="status">
-              Loading your projects…
+            <div className="workspace-loading" role="status">
+              <span>Loading your projects…</span>
+              <div className="skeleton-grid" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+              </div>
             </div>
           )}
           {error && (
             <Empty>
-              <h2>{loaded ? "Could not refresh workspace" : "Could not load workspace"}</h2>
+              <h2>
+                {loaded
+                  ? "Could not refresh workspace"
+                  : "Could not load workspace"}
+              </h2>
               <p>{error}</p>
               <button onClick={() => void refresh()}>Retry</button>
             </Empty>

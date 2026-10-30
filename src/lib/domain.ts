@@ -32,7 +32,11 @@ export function currentDeliveries(d: CloudData, projectIds: string[]) {
   );
   const latest = new Map<string, Submission>();
   for (const submission of d.submissions) {
-    if (!milestones.has(submission.milestone_id) || submission.status === "uploading") continue;
+    if (
+      !milestones.has(submission.milestone_id) ||
+      submission.status === "uploading"
+    )
+      continue;
     const previous = latest.get(submission.milestone_id);
     if (!previous || previous.revision < submission.revision)
       latest.set(submission.milestone_id, submission);
@@ -85,16 +89,14 @@ export function safeUrl(value: string) {
     // Require an explicit web scheme; URL() also accepts malformed https:host.
     if (!/^https?:\/\//i.test(value.trim())) return null;
     const u = new URL(value);
-    return ["http:", "https:"].includes(u.protocol)
-      ? u.href
-      : null;
+    return ["http:", "https:"].includes(u.protocol) ? u.href : null;
   } catch {
     return null;
   }
 }
 export function safeReturn(value: string | null) {
   return value &&
-    /^\/(?:dashboard|projects(?:\/[\w/-]+)?|handoff\/[\w-]+|invitations|reviews|agreements|payments|activity|settings)(?:\?[^#]*)?$/.test(
+    /^\/(?:dashboard|judge-workspace|projects(?:\/[\w/-]+)?|handoff\/[\w-]+|invitations|reviews|agreements|payments|activity|settings)(?:\?[^#]*)?$/.test(
       value,
     )
     ? value
