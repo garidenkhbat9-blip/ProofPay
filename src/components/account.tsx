@@ -1,0 +1,102 @@
+"use client";
+import Link from "next/link";
+import { useWorkspace } from "./provider";
+import { Heading, Empty, FormMessage, useTask } from "./ui";
+import { memberRole, money } from "@/lib/domain";
+import { PaymentWorkspace } from "./payments";
+export function SettingsPage() {
+  const { user, signOut } = useWorkspace(),
+    task = useTask();
+  return (
+    <>
+      <Heading title="Account" />
+      <section className="card">
+        <h2>{user?.user_metadata.full_name || "Your account"}</h2>
+        <p>{user?.email}</p>
+        <FormMessage error={task.error} />
+        <button disabled={task.busy} onClick={() => void task.run(signOut)}>
+          Sign out
+        </button>
+      </section>
+      <section className="card">
+        <h2>Connections</h2>
+        <p>
+          Supabase email authentication, projects, invitations, agreements and
+          delivery use the existing database.
+        </p>
+        <p>
+          Website agreement drafting can use Gemini when configured on the
+          server. Drafts require your review and both parties’ acceptance.
+        </p>
+        <p>Automated website verification is not connected. PayPal Sandbox invoicing requires a verified freelancer merchant connection.</p>
+      </section>
+    </>
+  );
+}
+export function PaymentsPage() {
+  return <PaymentWorkspace />;
+}
+export function ActivityPage() {
+  const { data, user, perspective } = useWorkspace();
+  const ids = new Set(
+    data.projects
+      .filter((p) => memberRole(data, p.id, user?.id) === perspective)
+      .map((p) => p.id),
+  );
+  const events = [
+    ...data.agreements
+      .filter((a) => ids.has(a.project_id))
+      .map((a) => ({
+        id: "a" + a.id,
+        at: a.created_at,
+        text: `Agreement version ${a.version} created`,
+        href: "/projects/" + a.project_id + "/agreement?version=" + a.id,
+      })),
+    ...data.submissions
+      .filter((s) => ids.has(s.project_id) && s.submitted_at)
+      .map((s) => ({
+        id: "s" + s.id,
+        at: s.submitted_at!,
+        text: `Revision ${s.revision} submitted`,
+        href: "/handoff/" + s.link_id,
+      })),
+    ...data.reviews.flatMap((r) => {
+      const s = data.submissions.find(
+        (s) => s.id === r.submission_id && ids.has(s.project_id),
+      );
+      return s
+        ? [
+            {
+              id: "r" + r.id,
+              at: r.created_at,
+              text:
+                r.decision === "approved"
+                  ? "Milestone approved"
+                  : "Changes requested",
+              href: "/handoff/" + s.link_id,
+            },
+          ]
+        : [];
+    }),
+  ].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+  return (
+    <>
+      <Heading
+        title="Activity"
+        subtitle="Recent agreement and delivery records."
+      />
+      <div className="delivery-list">
+        {events.map((e) => (
+          <Link className="delivery-row" key={e.id} href={e.href}>
+            <div>
+              <h3>{e.text}</h3>
+              <p>{new Date(e.at).toLocaleString()}</p>
+            </div>
+            <span>→</span>
+          </Link>
+        ))}
+        {!events.length && <div className="empty">No activity yet.</div>}
+      </div>
+    </>
+  );
+}

@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.validation/
+out/
+.env*
+!.env.example
+!.env.server.example
+*.tsbuildinfo
+*.log
+.DS_Store
+.env.local
