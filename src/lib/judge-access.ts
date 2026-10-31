@@ -11,7 +11,19 @@ export function judgeRole(value: unknown): Role | null {
 }
 
 export function judgeDestination(role: Role) {
-  return `/judge-workspace?perspective=${role}`;
+  return `/dashboard?perspective=${role}`;
+}
+
+export function entryPerspective(destination: string): Role | null {
+  const [path, query] = destination.split("?");
+  if (path !== "/dashboard" && path !== "/judge-workspace") return null;
+  const values = new URLSearchParams(query).getAll("perspective");
+  return values.length === 1 ? judgeRole(values[0]) : null;
+}
+
+export function legacyJudgeDestination(value: unknown) {
+  const role = judgeRole(value);
+  return role ? judgeDestination(role) : "/dashboard";
 }
 
 // This is a presentation allowlist, never an authorization mechanism.

@@ -4,14 +4,15 @@ import { useWorkspace } from "./provider";
 import { Heading, Empty, FormMessage, useTask } from "./ui";
 import { memberRole, money } from "@/lib/domain";
 import { PaymentWorkspace } from "./payments";
+import { workspaceIdentity } from "@/lib/workspace-onboarding";
 export function SettingsPage() {
-  const { user, signOut } = useWorkspace(),
+  const { user, data, signOut } = useWorkspace(),
     task = useTask();
   return (
     <>
       <Heading title="Account" />
       <section className="card">
-        <h2>{user?.user_metadata.full_name || "Your account"}</h2>
+        <h2>{workspaceIdentity(user, data.profiles).displayName}</h2>
         <p>{user?.email}</p>
         <FormMessage error={task.error} />
         <button disabled={task.busy} onClick={() => void task.run(signOut)}>

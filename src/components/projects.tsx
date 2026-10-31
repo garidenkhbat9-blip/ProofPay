@@ -27,6 +27,9 @@ import { rpc } from "@/lib/cloud";
 import type { Project, Invitation } from "@/lib/types";
 import { projectNextStep } from "@/lib/project-workflow";
 import { ProjectNextAction } from "./project-next-step";
+import { dashboardGuidance, workspaceIdentity } from "@/lib/workspace-onboarding";
+import { WorkspaceOnboarding, WorkflowHelp } from "./workspace-onboarding";
+import { JudgeWorkspace } from "./judge-workspace";
 export function ProjectTabs({
   id,
   tab,
@@ -122,11 +125,11 @@ export function ProjectsPage() {
     </>
   );
 }
-export function Dashboard() {
-  const { data, user, perspective, refresh } = useWorkspace();
-  const projects = data.projects.filter(
-    (p) => memberRole(data, p.id, user?.id) === perspective,
-  );
+export function Dashboard({ projectIds = [] }: { projectIds?: string[] }) {
+  const { data, user, perspective, refresh, setPerspective } = useWorkspace();
+  const { projects, actions: nextActions, pendingInvitation: hasPending, otherPerspective, otherProjects } = dashboardGuidance(data, user, perspective);
+  const { greeting } = workspaceIdentity(user, data.profiles);
+  const progressUnavailable = !!(data.agreementError || data.deliveryError);
   const current = currentDeliveries(
     data,
     projects.map((p) => p.id),
@@ -134,88 +137,41 @@ export function Dashboard() {
   const waiting = current.filter((s) => s.status === "submitted").length;
   const approved = current.filter((s) => s.status === "approved").length;
   const changesReq = current.filter((s) => s.status === "changes").length;
-  const nextActions = projects
-    .flatMap((project) => {
-      const step = projectNextStep(data, project, user?.id);
-      return step && project.status !== "archived" ? [{ project, step }] : [];
-    })
-    .sort((a, b) => Number(b.step.attention) - Number(a.step.attention));
   const totalBudget = projects.reduce(
     (sum, p) => sum + Number(p.budget_amount),
     0,
   );
-  const firstName =
-    user?.user_metadata.full_name?.split(" ")[0] ||
-    user?.email?.split("@")[0] ||
-    "there";
   const hasProjects = projects.length > 0;
-  const hasPending = data.invitations.some(
-    (i) =>
-      i.invited_email === user?.email?.toLowerCase() &&
-      invitationStatus(i) === "pending",
-  );
   return (
     <>
-      <div className="dash-welcome">
-        <h1>Welcome back, {firstName}</h1>
+      {hasProjects && <div className="dash-welcome">
+        <span className="judge-eyebrow">{perspective === "client" ? "CLIENT" : "FREELANCER"} WORKSPACE</span>
+        <h1>{greeting}</h1>
         <p>
           {perspective === "client"
             ? "Your projects and the work ready for your review."
             : "Your work, delivery updates and next steps."}
         </p>
-      </div>
-      {hasPending && (
+      </div>}
+      {data.invitationError && <Notice>Invitation status is unavailable. <button onClick={() => void refresh()}>Refresh workspace</button></Notice>}
+      {progressUnavailable && <Notice>Some agreement or delivery records could not be loaded. Progress is unavailable until these records are restored. <button onClick={() => void refresh()}>Refresh workspace</button></Notice>}
+      {!hasProjects && otherProjects.length > 0 && <Notice>You have {otherProjects.length} project{otherProjects.length === 1 ? "" : "s"} as a {otherPerspective === "client" ? "Client" : "Freelancer"} with this account. <button onClick={() => setPerspective(otherPerspective)}>View {otherPerspective === "client" ? "Client" : "Freelancer"} projects</button></Notice>}
+      {hasPending && hasProjects && (
         <Link className="invitationnotice" href="/invitations">
-          You have a project invitation →
+          You have a pending project invitation. Review invitation →
         </Link>
       )}
       {!hasProjects ? (
-        <div className="onboard">
-          <div className="onboard-icon">
-            <Icon name={perspective === "client" ? "folder" : "report"} />
-          </div>
-          <h2>
-            {perspective === "client"
-              ? "Create your first project"
-              : "Waiting for your first invitation"}
-          </h2>
-          <p>
-            {perspective === "client"
-              ? "Define the work, set a budget, and invite a freelancer to collaborate. Everything starts with a clear project brief."
-              : "Ask your client to invite you using your email address. Once they send an invitation, it will appear in your Invitations tab."}
-          </p>
-          {perspective === "client" && (
-            <Link className="buttonlike forest" href="/projects/new">
-              + Create your first project
-            </Link>
-          )}
-          <div className="onboard-steps">
-            {(perspective === "client"
-              ? [
-                  ["Create a project", "Define the brief and budget"],
-                  ["Invite freelancer", "Invite by email inside ProofPay"],
-                  ["Agree on scope", "Set milestones and criteria"],
-                  ["Review & approve", "Verify and accept work"],
-                ]
-              : [
-                  ["Get invited", "Client sends you an invite"],
-                  ["Accept invitation", "Join the project workspace"],
-                  ["Review agreement", "Agree on requirements"],
-                  ["Submit & deliver", "Upload evidence for review"],
-                ]
-            ).map(([title, desc], i) => (
-              <div className="onboard-step" key={i}>
-                <div className="onboard-step-num">
-                  {String(i + 1).padStart(2, "0")}
-                </div>
-                <strong>{title}</strong>
-                <span>{desc}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <WorkspaceOnboarding perspective={perspective} pendingInvitation={hasPending} />
       ) : (
         <>
+          {nextActions[0] && <section className="dashboard-next" aria-labelledby="dashboard-next-title">
+            <div><span className="judge-eyebrow">{nextActions[0].step.attention ? "YOUR NEXT ACTION" : "CURRENT PROJECT STATUS"}</span>
+              <p className="dashboard-next-project">{nextActions[0].project.title}</p>
+              <h2 id="dashboard-next-title">{nextActions[0].step.title}</h2>
+              <p>{nextActions[0].step.description}</p></div>
+            <Link className="buttonlike forest" href={nextActions[0].step.href}>{nextActions[0].step.label} <span aria-hidden="true">→</span></Link>
+          </section>}
           <div className="dash-stats">
             <div className="dash-stat">
               <div className="dash-stat-label">
@@ -235,9 +191,9 @@ export function Dashboard() {
                 {perspective === "client" ? "To review" : "Awaiting review"}
                 <Icon name="clock" />
               </div>
-              <div className="dash-stat-value">{waiting}</div>
+              <div className="dash-stat-value">{progressUnavailable ? "—" : waiting}</div>
               <div className="dash-stat-foot">
-                {changesReq > 0
+                {progressUnavailable ? "Status unavailable" : changesReq > 0
                   ? changesReq + " changes requested"
                   : "No changes requested"}
               </div>
@@ -247,7 +203,7 @@ export function Dashboard() {
                 Approved
                 <Icon name="check" />
               </div>
-              <div className="dash-stat-value">{approved}</div>
+              <div className="dash-stat-value">{progressUnavailable ? "—" : approved}</div>
               <div className="dash-stat-foot">work accepted · not payment</div>
             </div>
             <div className="dash-stat">
@@ -264,9 +220,9 @@ export function Dashboard() {
               {nextActions.length > 0 && (
                 <div className="dash-section" style={{ marginBottom: 20 }}>
                   <div className="dash-section-head">
-                    <h2>Needs your attention</h2>
+                    <h2>Project next steps</h2>
                     <span>
-                      {nextActions.length} action
+                      {nextActions.length} project
                       {nextActions.length !== 1 ? "s" : ""}
                     </span>
                   </div>
@@ -284,6 +240,7 @@ export function Dashboard() {
                       <div>
                         <strong>{project.title}</strong>
                         <p>{step.title}</p>
+                        <Badge>{step.status}</Badge>
                       </div>
                       <span>{step.label} →</span>
                     </Link>
@@ -330,7 +287,7 @@ export function Dashboard() {
             <aside>
               <div className="dash-aside-card">
                 <h3>Delivery progress</h3>
-                {current.length ? (
+                {progressUnavailable ? <p>Delivery progress is unavailable. Refresh your workspace to try again.</p> : current.length ? (
                   <>
                     {(
                       [
@@ -390,6 +347,8 @@ export function Dashboard() {
           </div>
         </>
       )}
+      <JudgeWorkspace projectIds={projectIds} />
+      <WorkflowHelp />
     </>
   );
 }

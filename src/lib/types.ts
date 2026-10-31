@@ -19,6 +19,7 @@ export interface Member {
 export interface Profile {
   id: string;
   full_name: string;
+  preferred_workspace?: Role;
 }
 export interface Invitation {
   id: string;

@@ -11,7 +11,8 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabase } from "@/lib/supabase";
 import { safeReturn } from "@/lib/domain";
-import { judgeDestination, judgeRole } from "@/lib/judge-access";
+import { judgeDestination, entryPerspective } from "@/lib/judge-access";
+import { authenticationReturn, needsAccountConfirmation } from "@/lib/auth-navigation";
 import { useWorkspace } from "./provider";
 import { Icon, useTask, FormMessage } from "./ui";
 import { PasswordField } from "./password-field";
@@ -23,18 +24,17 @@ import {
   type AuthErrors,
 } from "@/lib/auth-validation";
 export function AuthForm({ mode }: { mode: AuthMode }) {
-  const { user, ready, authError, recovery } = useWorkspace(),
+  const { user, ready, authError, recovery, signOut } = useWorkspace(),
     router = useRouter(),
     params = useSearchParams();
   const task = useTask();
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<AuthErrors>({});
   const [submitted, setSubmitted] = useState(false);
+  const [confirmedAccount, setConfirmedAccount] = useState<string | null>(null);
   const requestedDestination = safeReturn(params.get("next"));
-  const judge = requestedDestination.startsWith("/judge-workspace");
-  const requestedRole = judgeRole(
-    new URLSearchParams(requestedDestination.split("?")[1]).get("perspective"),
-  );
+  const requestedRole = entryPerspective(requestedDestination);
+  const judge = !!requestedRole;
   const [role, setRole] = useState<"client" | "freelancer">(
     requestedRole || "client",
   );
@@ -51,16 +51,18 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       (mode === "login" || mode === "signup") &&
       !window.location.hash.includes("type=recovery")
     ) {
+      // An existing session is not a sign-in to the selected dedicated account.
+      if (needsAccountConfirmation(destination, user.id, submitted, confirmedAccount)) return;
       let pending: string | null = null;
       try {
         pending = sessionStorage.getItem("proofpay-next");
         sessionStorage.removeItem("proofpay-next");
       } catch {}
       router.replace(
-        params.has("next") ? destination : safeReturn(pending || destination),
+        authenticationReturn(params.has("next") ? destination : null, pending || destination),
       );
     }
-  }, [user, ready, recovery, mode, destination, params, router]);
+  }, [user, ready, recovery, mode, destination, params, router, judge, submitted, confirmedAccount]);
   function validateInput(
     event: ChangeEvent<HTMLInputElement> | FocusEvent<HTMLInputElement>,
   ) {
@@ -125,7 +127,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               emailRedirectTo:
                 location.origin +
                 "/login" +
-                (judge ? "?next=" + encodeURIComponent(destination) : ""),
+                (params.has("next") ? "?next=" + encodeURIComponent(destination) : ""),
             },
           });
           if (error) throw error;
@@ -139,7 +141,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           }
         } else if (forgot) {
           const { error } = await client.auth.resetPasswordForEmail(email, {
-            redirectTo: location.origin + "/reset-password",
+            redirectTo: location.origin + "/reset-password" + (params.has("next") ? "?next=" + encodeURIComponent(destination) : ""),
           });
           if (error) throw error;
           setMessage(
@@ -150,7 +152,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           if (error) throw error;
           setMessage("Password updated. Opening your workspace…");
           setSubmitted(true);
-          router.replace("/dashboard");
+          router.replace(destination);
         } else {
           const { error } = await client.auth.signInWithPassword({
             email,
@@ -207,6 +209,20 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           </Link>
         </section>
         <section className="authcard">
+          {ready && user && !recovery && judge && !submitted && (mode === "login" || signup) ? (
+            <>
+              <div className="auth-judge-context"><Icon name="shield" /><span>Explore ProofPay · {requestedRole === "client" ? "Client" : "Freelancer"} workspace</span></div>
+              <h2>Confirm your account</h2>
+              <p>Signed in as <strong className="account-email">{user.email || "your current account"}</strong>.</p>
+              <p>Continue to the {requestedRole === "client" ? "Client" : "Freelancer"} view with this account, or sign out to use the matching dedicated account. Your project access stays the same.</p>
+              <FormMessage error={task.error} />
+              <div className="account-entry-actions">
+                <button className="primary widebutton" disabled={task.busy} onClick={() => setConfirmedAccount(user.id)}>Continue with this account</button>
+                <button className="widebutton" disabled={task.busy} onClick={() => void task.run(() => signOut(destination))}>Sign in with a different account</button>
+                <Link href="/dashboard">Back to my workspace</Link>
+              </div>
+            </>
+          ) : <>
           {judge && (
             <div className="auth-judge-context">
               <Icon name="shield" />
@@ -236,7 +252,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 : reset
                   ? "Choose a password for your account."
                   : judge
-                    ? "Use your own account with the email invited by the organizer."
+                    ? `Sign in with the dedicated Judge ${requestedRole === "client" ? "Client" : "Freelancer"} account provided for your session. Normal authentication is required.`
                     : "Sign in to your workspace."}
           </p>
           <form onSubmit={submit} noValidate aria-busy={task.busy}>
@@ -376,7 +392,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             </button>
           </form>
           {mode === "login" && (
-            <Link className="authforgot" href="/forgot-password">
+            <Link className="authforgot" href={"/forgot-password?next=" + encodeURIComponent(destination)}>
               Forgot password?
             </Link>
           )}
@@ -396,6 +412,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           <Link className="buttonlike widebutton" href="/demo">
             Explore simulated demo →
           </Link>
+          </>}
         </section>
       </main>
     </div>

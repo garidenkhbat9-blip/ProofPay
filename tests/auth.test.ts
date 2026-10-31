@@ -1,9 +1,31 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { authenticationReturn, needsAccountConfirmation } from "../src/lib/auth-navigation";
 import {
   authErrorMessage,
   validateAuthField,
 } from "../src/lib/auth-validation";
+
+test("exploration requires an existing account to be acknowledged, never silently switched", () => {
+  for (const role of ["client", "freelancer"]) {
+    const next = `/dashboard?perspective=${role}`;
+    assert.equal(needsAccountConfirmation(next, "account-a", false, null), true);
+    assert.equal(needsAccountConfirmation(next, "account-a", false, "account-a"), false);
+    assert.equal(needsAccountConfirmation(next, "account-b", false, "account-a"), true);
+    assert.equal(needsAccountConfirmation(next, "account-a", true, null), false);
+    assert.equal(needsAccountConfirmation(next, undefined, false, null), false);
+  }
+  assert.equal(needsAccountConfirmation("/projects/p", "account-a", false, null), false);
+});
+
+test("authentication retains role and project return paths while explicit intent takes priority", () => {
+  const pending = "/dashboard?perspective=client";
+  assert.equal(authenticationReturn("/dashboard?perspective=freelancer", pending), "/dashboard?perspective=freelancer");
+  assert.equal(authenticationReturn(null, pending), pending);
+  assert.equal(authenticationReturn("/projects/p/agreement?version=a", pending), "/projects/p/agreement?version=a");
+  for (const invalid of ["https://evil.test", "//evil.test", "/login", "/api/payments", "/dashboard/../api/payments", "/dashboard#external"])
+    assert.equal(authenticationReturn(invalid, pending), "/dashboard");
+});
 
 test("new passwords require eight characters without extra composition rules", () => {
   for (const mode of ["signup", "reset"] as const) {

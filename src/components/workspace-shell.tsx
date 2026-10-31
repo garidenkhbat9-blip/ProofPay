@@ -1,13 +1,16 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { useWorkspace } from "./provider";
 import { Icon, Empty } from "./ui";
+import { workspaceIdentity } from "@/lib/workspace-onboarding";
+import { entryPerspective } from "@/lib/judge-access";
 export function WorkspaceShell({ children }: { children: ReactNode }) {
   const {
       user,
+      data,
       ready,
       loading,
       loaded,
@@ -19,11 +22,20 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
       sync,
     } = useWorkspace(),
     path = usePathname(),
+    params = useSearchParams(),
     router = useRouter();
+  const requestedPerspective = entryPerspective(path + "?" + params.toString());
+  useEffect(() => {
+    if (!user || !requestedPerspective) return;
+    setPerspective(requestedPerspective);
+    // Consume entry intent so refresh/back navigation cannot undo a later choice.
+    if (path === "/dashboard") router.replace("/dashboard", { scroll: false });
+  }, [user, requestedPerspective, setPerspective, path, router]);
   const [open, setOpen] = useState(false);
   const [mobile, setMobile] = useState(false);
   const sidebar = useRef<HTMLElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
+  const perspectiveMenu = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     const media = window.matchMedia("(max-width: 720px)");
     const update = () => {
@@ -36,6 +48,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
   }, []);
   useEffect(() => {
     setOpen(false);
+    if (perspectiveMenu.current) perspectiveMenu.current.open = false;
   }, [path]);
   useEffect(() => {
     if (!mobile || !open) return;
@@ -44,9 +57,9 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
     const controls = () =>
       Array.from(
         sidebar.current?.querySelectorAll<HTMLElement>(
-          "a[href], button:not(:disabled)",
+          "a[href], button:not(:disabled), summary, select:not(:disabled)",
         ) || [],
-      );
+      ).filter((element) => element.getClientRects().length > 0);
     controls()[0]?.focus();
     const keydown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -102,7 +115,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
       router.replace("/login?next=" + encodeURIComponent(next));
     }
   }, [ready, user, authError, path, router]);
-  if (!ready || (!user && !authError))
+  if (!ready || (!user && !authError) || (user && requestedPerspective && requestedPerspective !== perspective))
     return (
       <main className="authloading" role="status">
         Loading your workspace…
@@ -117,8 +130,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
       </main>
     );
   if (!user) return null;
-  const name =
-    user.user_metadata.full_name || user.email?.split("@")[0] || "Account";
+  const { displayName: name, initials } = workspaceIdentity(user, data.profiles);
   const clientNav = [
     ["/dashboard", "grid", "Overview"],
     ["/projects", "folder", "Projects"],
@@ -166,36 +178,31 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           ProofPay
         </Link>
         <div className="workspace">
-          <span className="avatar">{name.slice(0, 2).toUpperCase()}</span>
+          <Icon name={perspective === "client" ? "briefcase" : "user"} />
           <div>
-            <strong>{name}</strong>
-            <small>{user.email}</small>
+            <strong>{perspective === "client" ? "Client workspace" : "Freelancer workspace"}</strong>
+            <small>{perspective === "client" ? "Manage work and review evidence" : "Deliver work and track reviews"}</small>
           </div>
         </div>
-        <div className="perspective-switcher">
-          <button
-            aria-pressed={perspective === "client"}
-            className={`perspective-btn ${perspective === "client" ? "active" : ""}`}
-            onClick={() => {
+        <details className="workspace-perspective" ref={perspectiveMenu}>
+          <summary>Switch perspective</summary>
+          <div>
+            <label htmlFor="workspace-perspective">View workspace as</label>
+            <select id="workspace-perspective" className="field" value={perspective} aria-describedby="perspective-help" onChange={(event) => {
+              const next = event.target.value;
+              if (next !== "client" && next !== "freelancer") return;
+              setPerspective(next);
+              if (perspectiveMenu.current) { perspectiveMenu.current.open = false; perspectiveMenu.current.querySelector("summary")?.focus(); }
               setOpen(false);
-              setPerspective("client");
               router.push("/dashboard");
-            }}
-          >
-            Client
-          </button>
-          <button
-            aria-pressed={perspective === "freelancer"}
-            className={`perspective-btn ${perspective === "freelancer" ? "active" : ""}`}
-            onClick={() => {
-              setOpen(false);
-              setPerspective("freelancer");
-              router.push("/dashboard");
-            }}
-          >
-            Freelancer
-          </button>
-        </div>
+            }}>
+              <option value="client">Client</option><option value="freelancer">Freelancer</option>
+            </select>
+            <p id="perspective-help">You can work as a Client on one project and a Freelancer on another.</p>
+            <p>This keeps the same signed-in account and project permissions.</p>
+            <Link href="/settings">Use a different account</Link>
+          </div>
+        </details>
         {nav.map(([href, icon, title]) => (
           <Link
             key={href}
@@ -211,21 +218,12 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           </Link>
         ))}
         <div className="sidebottom">
-          <Link
-            className={`nav ${path === "/judge-workspace" ? "active" : ""}`}
-            href="/judge-workspace"
-            aria-current={path === "/judge-workspace" ? "page" : undefined}
-            onClick={() => setOpen(false)}
-          >
-            <Icon name="shield" />
-            Judge guide
-          </Link>
-          <Link className="nav" href="/settings" onClick={() => setOpen(false)}>
+          <Link className={`nav ${path === "/settings" ? "active" : ""}`} aria-current={path === "/settings" ? "page" : undefined} href="/settings" onClick={() => setOpen(false)}>
             <Icon name="gear" />
-            Settings
+            Account & settings
           </Link>
           <div className="user">
-            <span className="avatar">{name.slice(0, 2).toUpperCase()}</span>
+            <span className="avatar">{initials}</span>
             <div>
               <strong>{name}</strong>
               <small>{user.email}</small>
@@ -256,9 +254,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
             <span>Workspace</span>
             <span>/</span>
             <b>
-              {path === "/judge-workspace"
-                ? "Judge guide"
-                : path.startsWith("/handoff")
+              {path.startsWith("/handoff")
                   ? "Delivery"
                   : nav.find(([href]) => path.startsWith(href))?.[2] ||
                     "Settings"}
@@ -272,6 +268,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           </div>
         </header>
         <div className="content" id="workspace-main" tabIndex={-1}>
+          <p className="workspace-account">Signed in as {user.email || name} · <Link href="/settings">Account</Link></p>
           {!loaded && loading && (
             <div className="workspace-loading" role="status">
               <span>Loading your projects…</span>

@@ -7,6 +7,8 @@ import {
   judgeProjects,
   judgeProgress,
   judgeRole,
+  entryPerspective,
+  legacyJudgeDestination,
 } from "../src/lib/judge-access";
 import { safeReturn } from "../src/lib/domain";
 
@@ -79,6 +81,19 @@ test("judge navigation preserves the chosen view without allowing external retur
     assert.equal(safeReturn(invalid), "/dashboard");
   for (const invalid of ["admin", "CLIENT", ["client"], null, undefined])
     assert.equal(judgeRole(invalid), null);
+});
+
+test("both public choices enter the real dashboard and old judge URLs retain valid intent", () => {
+  for (const role of ["client", "freelancer"] as const) {
+    assert.equal(judgeDestination(role), `/dashboard?perspective=${role}`);
+    assert.equal(legacyJudgeDestination(role), judgeDestination(role));
+    assert.equal(entryPerspective(judgeDestination(role)), role);
+    assert.equal(entryPerspective(`/judge-workspace?perspective=${role}`), role);
+  }
+  for (const invalid of [null, undefined, "admin", ["client", "freelancer"]])
+    assert.equal(legacyJudgeDestination(invalid), "/dashboard");
+  for (const invalid of ["/dashboard?perspective=admin", "/dashboard?perspective=client&perspective=freelancer", "/projects/p?perspective=client", "https://evil.test/dashboard?perspective=client"])
+    assert.equal(entryPerspective(invalid), null);
 });
 
 test("an absent or invalid judge configuration fails closed instead of selecting arbitrary projects", () => {

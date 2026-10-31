@@ -902,6 +902,63 @@ dialog::backdrop {
     height: 80px;
   }
 }
+/* Guided workspace entry; perspective remains a secondary preference. */
+.sidebar .workspace { align-items: center; gap: 10px; margin-bottom: 4px; }
+.sidebar .workspace > .icon { color: var(--accent); }
+.sidebar .workspace small { white-space: normal; overflow: visible; font-size: 11px; line-height: 1.6; margin-top: 3px; }
+.workspace-perspective { margin: 0 4px 20px; font-size: 12px; color: var(--muted); }
+.workspace-perspective summary, .workflow-help summary { cursor: pointer; min-height: 44px; padding: 12px 8px; border-radius: 6px; }
+.workspace-perspective summary:hover, .workflow-help summary:hover { color: var(--accent); background: #f3f6f1; }
+summary:focus-visible { outline: 3px solid #168566; outline-offset: 3px; }
+.workspace-perspective > div { padding: 8px 8px 12px; }
+.workspace-perspective label { display: block; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
+.workspace-perspective .field { width: 100%; min-width: 0; font-size: 14px; }
+.workspace-perspective p { margin: 12px 0 0; line-height: 1.7; }
+.workspace-perspective p + p { font-size: 11px; }
+.sidebar .user strong { overflow-wrap: anywhere; }
+.dash-welcome > .judge-eyebrow { margin-bottom: 10px; }
+.workspace-onboard { text-align: left; padding: clamp(24px, 3vw, 40px); }
+.workspace-onboard h1 { font-size: clamp(22px, 2vw, 28px); letter-spacing: -.65px; margin-top: 10px; }
+.workspace-onboard p { max-width: 620px; margin: 0 0 24px; }
+.workspace-onboard .buttonlike { padding: 12px 20px; }
+.workspace-onboard .onboard-hint { margin: 16px 0 0; font-size: 12px; max-width: 600px; }
+.onboard-hint a { text-decoration: underline; text-underline-offset: 3px; color: var(--accent); }
+.workspace-onboard .onboard-steps { padding-left: 0; list-style: none; margin-bottom: 0; }
+.workspace-onboard .onboard-step-num { background: #f5f8f3; color: var(--accent); }
+.workflow-help { margin: 24px 0; border-top: 1px solid var(--line); padding-top: 12px; color: var(--muted); font-size: 13px; }
+.workflow-help summary { width: fit-content; font-weight: 550; }
+.workflow-help > div { padding: 0 8px 12px; max-width: 760px; line-height: 1.8; }
+.workflow-help a { color: var(--accent); font-weight: 600; }
+.account-email { overflow-wrap: anywhere; }
+.account-entry-actions { display: grid; gap: 12px; margin-top: 24px; }
+.account-entry-actions > a { text-align: center; padding: 12px; }
+.workspace-account { margin: 0 0 20px; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.workspace-account a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.prepared-project { margin: 16px 0; }
+.prepared-project dl { margin: 8px 0; }
+.prepared-project dl > div { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.prepared-project dt { min-width: 82px; font-weight: 600; }
+.prepared-project dd { margin: 0; }
+.dashboard-next { display: flex; gap: 28px; align-items: center; justify-content: space-between; border: 1px solid #d4e2d7; border-radius: 12px; background: #f6f9f5; padding: 28px; margin-bottom: 24px; }
+.dashboard-next > div { min-width: 0; }
+.dashboard-next h2 { font-size: 22px; line-height: 1.4; font-weight: 650; letter-spacing: -.5px; margin: 8px 0; }
+.dashboard-next p { color: var(--muted); font-size: 13px; line-height: 1.8; margin: 8px 0 0; overflow-wrap: anywhere; }
+.dashboard-next .dashboard-next-project { color: var(--accent); font-weight: 600; font-size: 12px; }
+.dashboard-next .buttonlike { flex-shrink: 0; max-width: 100%; white-space: normal; }
+.dash-action > div { min-width: 0; }
+.dash-action strong { overflow-wrap: anywhere; }
+.dash-action .delivery-pill { display: inline-flex; font-size: 11px; margin-top: 8px; }
+@media (max-width: 1000px) {
+  .dashboard-next { align-items: flex-start; flex-direction: column; gap: 18px; }
+}
+@media (max-width: 720px) {
+  .workspace-onboard, .dashboard-next { padding: 24px 20px; }
+  .workspace-onboard .buttonlike { width: 100%; }
+  .dashboard-next h2 { font-size: 20px; }
+  .dash-action { flex-wrap: wrap; }
+  .dash-action > span:last-child { margin-left: 0; width: 100%; white-space: normal; }
+  .workspace-perspective .field { font-size: 16px; }
+}
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

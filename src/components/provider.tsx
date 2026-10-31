@@ -12,8 +12,9 @@ import type { User } from "@supabase/supabase-js";
 import { getSupabase } from "@/lib/supabase";
 import { errorMessage, loadCloud } from "@/lib/cloud";
 import { emptyCloud, type CloudData, type Role } from "@/lib/types";
-import { legacyPath } from "@/lib/domain";
-import { accountPerspective, perspectiveKey, createRefreshQueue } from "@/lib/workspace-sync";
+import { legacyPath, safeReturn } from "@/lib/domain";
+import { entryPerspective, judgeRole } from "@/lib/judge-access";
+import { accountPerspective, perspectiveKey, recordPerspective, createRefreshQueue } from "@/lib/workspace-sync";
 import { useRouter } from "next/navigation";
 interface Workspace {
   user: User | null;
@@ -29,7 +30,7 @@ interface Workspace {
   refresh: () => Promise<void>;
   sync: () => Promise<void>;
   notice: (text: string) => void;
-  signOut: () => Promise<void>;
+  signOut: (returnTo?: string) => Promise<void>;
 }
 const Context = createContext<Workspace | null>(null);
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
@@ -44,6 +45,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     [perspective, setView] = useState<Role>("client"),
     [message, setMessage] = useState("");
   const identity = useRef<string | null>(null),
+    perspectiveChosen = useRef(false),
     epoch = useRef(0),
     timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const queue = useRef<ReturnType<typeof createRefreshQueue> | null>(null);
@@ -62,6 +64,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       try {
         const next = await loadCloud(getSupabase());
         if (current()) {
+          if (!perspectiveChosen.current) {
+            setView(recordPerspective(next, id));
+            perspectiveChosen.current = true;
+          }
           setData(next);
           setLoaded(true);
           setError("");
@@ -105,7 +111,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         setLoading(!!next);
         let stored: string | null = null;
         try { if (next) stored = localStorage.getItem(perspectiveKey(next.id)); } catch {}
-        setView(accountPerspective(stored, next?.user_metadata?.preferred_workspace));
+        const requested = entryPerspective(window.location.pathname + window.location.search);
+        perspectiveChosen.current = !!(requested || judgeRole(stored) || judgeRole(next?.user_metadata?.preferred_workspace));
+        setView(accountPerspective(stored, next?.user_metadata?.preferred_workspace, requested));
       }
       identity.current = next?.id ?? null;
       setUser(next);
@@ -123,7 +131,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
             setRecovery(false);
           if (event === "PASSWORD_RECOVERY") {
             setRecovery(true);
-            router.replace("/reset-password");
+            const next = new URLSearchParams(window.location.search).get("next");
+            router.replace("/reset-password" + (next ? "?next=" + encodeURIComponent(safeReturn(next)) : ""));
           }
         },
       );
@@ -155,13 +164,14 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       if (timer.current) clearTimeout(timer.current);
     };
   }, [refresh, router]);
-  const setPerspective = (role: Role) => {
+  const setPerspective = useCallback((role: Role) => {
+    perspectiveChosen.current = true;
     setView(role);
     try {
       if (identity.current) localStorage.setItem(perspectiveKey(identity.current), role);
     } catch {}
-  };
-  const signOut = async () => {
+  }, []);
+  const signOut = async (returnTo?: string) => {
     const { error } = await getSupabase().auth.signOut({ scope: "local" });
     if (error) throw error;
     ++epoch.current;
@@ -177,7 +187,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setError("");
     setAuthError("");
     setMessage("");
-    router.replace("/login");
+    try { sessionStorage.removeItem("proofpay-next"); } catch {}
+    router.replace(returnTo ? "/login?next=" + encodeURIComponent(safeReturn(returnTo)) : "/login");
   };
   return (
     <Context.Provider

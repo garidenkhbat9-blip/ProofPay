@@ -34,7 +34,7 @@ export default function ExplorePage() {
             Explore <span>ProofPay</span>
           </h1>
           <h2>Choose your perspective</h2>
-          <p>Choose how you’d like to experience the platform.</p>
+          <p>Choose a workspace, then sign in with the matching dedicated account.</p>
         </div>
         <div className="judge-choices">
           {(["client", "freelancer"] as const).map((role, i) => (
@@ -58,7 +58,7 @@ export default function ExplorePage() {
               <p id={`${role}-description`}>
                 {role === "client"
                   ? "Review agreements, inspect submitted work, and approve milestones."
-                  : "Manage agreed deliverables, submit evidence, and request payment."}
+                  : "Review invitations and agreements, submit evidence, and track payment status."}
               </p>
               <div className="judge-choice-bottom">
                 <span id={`${role}-continue`}>
@@ -72,9 +72,9 @@ export default function ExplorePage() {
         <div className="judge-access-note">
           <Icon name="shield" />
           <p id="explore-auth-note">
-            Secure sign-in required. Continue with your own account using the
-            email invited by the organizer. Choosing a perspective does not sign
-            you in or change your project permissions.
+            Secure sign-in is still required. Use the Judge Client or Judge
+            Freelancer account provided for your session. Choosing a workspace
+            does not sign you in, switch accounts, or grant project access.
           </p>
         </div>
         <section className="judge-guide" aria-labelledby="judge-guide-title">
