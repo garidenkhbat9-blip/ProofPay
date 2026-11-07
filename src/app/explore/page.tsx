@@ -34,7 +34,7 @@ export default function ExplorePage() {
             Explore <span>ProofPay</span>
           </h1>
           <h2>Choose your perspective</h2>
-          <p>Choose a workspace, then sign in with the matching dedicated account.</p>
+          <p>Choose how you want to start, then sign in with Google or email.</p>
         </div>
         <div className="judge-choices">
           {(["client", "freelancer"] as const).map((role, i) => (
@@ -72,8 +72,7 @@ export default function ExplorePage() {
         <div className="judge-access-note">
           <Icon name="shield" />
           <p id="explore-auth-note">
-            Secure sign-in is still required. Use the Judge Client or Judge
-            Freelancer account provided for your session. Choosing a workspace
+            Sign in with your own account. Choosing a workspace
             does not sign you in, switch accounts, or grant project access.
           </p>
         </div>

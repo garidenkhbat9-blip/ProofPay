@@ -62,6 +62,12 @@ test('client workspace components: desktop/mobile tour, actions and responsive l
       throw Error(`UI timeout: ${expression}`);
     };
     const cases = [
+      ['onboarding-desktop', 'view=onboarding', 1440, 1000],
+      ['onboarding-mobile', 'view=onboarding', 390, 900],
+      ['onboarding-narrow', 'view=onboarding', 320, 900],
+      ['login-client-intent', 'view=login&intent=client', 1440, 1000],
+      ['login-freelancer-intent', 'view=login&intent=freelancer', 390, 900],
+      ['signup-freelancer-intent', 'view=signup&intent=freelancer', 390, 1000],
       ['login-desktop', 'view=login', 1440, 1000],
       ['signup-desktop', 'view=signup', 1440, 1100],
       ['login-mobile', 'view=login', 390, 900],
@@ -89,7 +95,14 @@ test('client workspace components: desktop/mobile tour, actions and responsive l
       await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
       await send('Page.navigate', { url: `${fixture}?${query}&case=${name}` });
       const authCase = name.startsWith('login') || name.startsWith('signup');
-      await waitFor(`location.search.includes('case=${name}') && !!document.querySelector('${authCase ? '.authcard .google-auth-button' : '#workspace-main'}')`);
+      await waitFor(`location.search.includes('case=${name}') && !!document.querySelector('${authCase ? '.authcard .google-auth-button' : name.startsWith('onboarding') ? '.workspace-options' : '#workspace-main'}')`);
+      if (name.startsWith('onboarding')) {
+        assert(await evaluate(`document.querySelector('.widebutton').disabled`));
+        await evaluate(`document.querySelectorAll('.workspace-options button')[1].click()`);
+        await waitFor(`document.querySelectorAll('.workspace-options button')[1].getAttribute('aria-pressed') === 'true'`);
+        assert(await evaluate(`!document.querySelector('.widebutton').disabled`));
+        assert(await evaluate(`document.querySelector('.workspace-onboarding-card').getBoundingClientRect().width <= 462`));
+      }
       if (name.startsWith('verify')) {
         await waitFor(`!!document.getElementById('browser-results')`);
         const report = await evaluate(`JSON.parse(document.getElementById('browser-results').textContent)`);
@@ -121,6 +134,7 @@ test('client workspace components: desktop/mobile tour, actions and responsive l
         await evaluate(`document.querySelector('.google-auth-button').click();document.querySelector('.google-auth-button').click()`);
         await waitFor(`!!document.querySelector('.google-auth-error')`);
         assert.equal(await evaluate('globalThis.authGoogleRequests'),1);
+        assert.equal(await evaluate('globalThis.authGoogleIntent'), query.includes('intent=freelancer') ? 'freelancer' : query.includes('intent=client') || name.startsWith('signup') ? 'client' : null);
         assert(await evaluate(`!document.querySelector('.google-auth-button').disabled`));
         assert(await evaluate(`document.documentElement.scrollWidth <= innerWidth`));
         const errorShot = await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});

@@ -23,9 +23,9 @@ const workspace = {user:{id:role === 'client'?'client-a':'worker',email:role ===
  if(refreshFails)throw Error('Fixture refresh failed');
  Object.assign(data.projects[0],{status:archiveState.status,archive_revision:archiveState.revision});rerender();
 },sync:async()=>{},setPerspective:()=>{},notice:()=>{}};
-const auth = {getSession:async()=>({data:{session:{user:{id:workspace.user.id},access_token:workspace.user.id}},error:null}),getUser:async(token)=>{await preferenceGate;return {data:{user:{id:token,user_metadata:remote[token]||{}}},error:null};}};
+const auth = {getSession:async()=>({data:{session:{user:{id:workspace.user.id},access_token:workspace.user.id}},error:null}),getUser:async(token)=>{await preferenceGate;const id=token||workspace.user?.id;return {data:{user:{id,email_confirmed_at:'confirmed',user_metadata:remote[id]||{}}},error:null};}};
 globalThis.fetch = async (_url, init) => {
- if (_url === '/auth/google') { globalThis.authGoogleRequests = (globalThis.authGoogleRequests || 0) + 1; await new Promise(resolve=>setTimeout(resolve,100)); return Response.json({error:'Google sign-in is unavailable. Please try again later.'},{status:503}); }
+ if (_url === '/auth/google') { globalThis.authGoogleIntent=JSON.parse(init.body).intent; globalThis.authGoogleRequests = (globalThis.authGoogleRequests || 0) + 1; await new Promise(resolve=>setTimeout(resolve,100)); return Response.json({error:'Google sign-in is unavailable. Please try again later.'},{status:503}); }
  if(_url==='/api/payments' && init?.method==='GET')return Response.json({payments:[],history:[],setupError:null,merchantFreelancerId:null,truncated:false});
  if(String(_url).endsWith('/archive')) {
   if(init?.method==='GET')return Response.json(archiveMode==='missing'?{...archiveState,available:false,canArchive:false,canReopen:false,reason:'SETUP_REQUIRED'}:archiveState);
@@ -51,7 +51,7 @@ modules['src/components/provider']=(module)=>{module.exports={useWorkspace:()=>w
 modules['src/lib/supabase']=(module)=>{module.exports={getSupabase:()=>({auth})};};
 modules['next/link']=(module)=>{module.exports={__esModule:true,default:({children,prefetch,replace,scroll,...props})=>React.createElement('a',props,children)};};
 modules['next/image']=(module)=>{module.exports={__esModule:true,default:({src,...props})=>React.createElement('img',{...props,src:'../../public'+src})};};
-modules['next/navigation']=(module)=>{module.exports={usePathname:()=>path,useSearchParams:()=>new URLSearchParams(),useRouter:()=>({replace:()=>{},push:()=>{}})};};
+modules['next/navigation']=(module)=>{module.exports={usePathname:()=>path,useSearchParams:()=>new URLSearchParams(params.has('intent')?{next:'/dashboard?perspective='+params.get('intent')}:{}),useRouter:()=>({replace:()=>{},push:()=>{}})};};
 const {Dashboard,ProjectsPage,ProjectOverview}=load('src/components/projects');
 const {WorkspaceShell}=load('src/components/workspace-shell');
 const {AgreementPage}=load('src/components/agreement');
@@ -72,6 +72,9 @@ const assert=(ok,message)=>{if(!ok)throw Error(message);};
 function button(text) {return [...document.querySelectorAll('button')].find(node=>node.textContent.trim()===text);}
 async function run() {
  localStorage.clear();
+ if (view === 'onboarding') {
+  root.render(React.createElement(load('src/app/auth/workspace/page').default)); return;
+ }
  if (view === 'login' || view === 'signup') {
   workspace.user = null; path = '/' + view;
   root.render(React.createElement(load('src/components/auth-form').AuthForm,{mode:view}));

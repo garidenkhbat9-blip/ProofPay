@@ -59,7 +59,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       (mode === "login" || mode === "signup") &&
       !window.location.hash.includes("type=recovery")
     ) {
-      // An existing session is not a sign-in to the selected dedicated account.
+      // A perspective choice must never silently accept a different account.
       if (needsAccountConfirmation(destination, user.id, submitted, confirmedAccount)) return;
       let pending: string | null = null;
       try {
@@ -245,7 +245,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               <div className="auth-judge-context"><Icon name="shield" /><span>Explore ProofPay · {requestedRole === "client" ? "Client" : "Freelancer"} workspace</span></div>
               <h2>Confirm your account</h2>
               <p>Signed in as <strong className="account-email">{user.email || "your current account"}</strong>.</p>
-              <p>Continue to the {requestedRole === "client" ? "Client" : "Freelancer"} view with this account, or sign out to use the matching dedicated account. Your project access stays the same.</p>
+              <p>Continue to the {requestedRole === "client" ? "Client" : "Freelancer"} view with this account, or sign in with another account. Your project access stays the same.</p>
               <FormMessage error={task.error} />
               <div className="account-entry-actions">
                 <button className="primary widebutton" disabled={task.busy} onClick={() => setConfirmedAccount(user.id)}>Continue with this account</button>
@@ -254,7 +254,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               </div>
               <div className="authdivider">or switch with Google</div>
               <p className="auth-quiet">Google sign-in replaces the account in this browser.</p>
-              <GoogleAuthButton disabled={task.busy || submitted || !ready} onBusy={setGooglePending} />
+              <GoogleAuthButton intent={signup ? role : requestedRole} disabled={task.busy || submitted || !ready} onBusy={setGooglePending} />
             </>
           ) : <>
           {judge && (
@@ -286,7 +286,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 : reset
                   ? "Choose a password for your account."
                   : judge
-                    ? `Sign in with the dedicated Judge ${requestedRole === "client" ? "Client" : "Freelancer"} account provided for your session. Normal authentication is required.`
+                    ? `Sign in to continue to your ${requestedRole === "client" ? "Client" : "Freelancer"} workspace.`
                     : "Sign in to your workspace."}
           </p>
           <form onSubmit={submit} noValidate aria-busy={task.busy}>
@@ -428,7 +428,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           </form>
           {(mode === "login" || signup) && <>
             <div className="authdivider">{signup ? "or sign up with" : "or continue with"}</div>
-            <GoogleAuthButton disabled={task.busy || submitted || !ready} onBusy={setGooglePending} />
+            <GoogleAuthButton intent={signup ? role : requestedRole} disabled={task.busy || submitted || !ready} onBusy={setGooglePending} />
           </>}
           <p className="authalternate">
             {signup ? "Already have an account?" : "New to ProofPay?"}{" "}

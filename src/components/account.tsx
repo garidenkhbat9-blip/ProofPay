@@ -5,8 +5,10 @@ import { Heading, EmptyState, FormMessage, useTask } from "./ui";
 import { memberRole, money } from "@/lib/domain";
 import { PaymentWorkspace } from "./payments";
 import { workspaceIdentity } from "@/lib/workspace-onboarding";
+import { getSupabase } from "@/lib/supabase";
+import { saveWorkspacePreference } from "@/lib/workspace-preference";
 export function SettingsPage() {
-  const { user, data, signOut } = useWorkspace(),
+  const { user, data, signOut, perspective, setPerspective } = useWorkspace(),
     task = useTask();
   return (
     <>
@@ -15,6 +17,16 @@ export function SettingsPage() {
         <h2>{workspaceIdentity(user, data.profiles).displayName}</h2>
         <p>{user?.email}</p>
         <FormMessage error={task.error} />
+        <label htmlFor="account-workspace">Workspace view</label>
+        <select id="account-workspace" value={perspective} disabled={task.busy || !user} onChange={event => {
+          const role = event.target.value === "freelancer" ? "freelancer" : "client";
+          void task.run(async () => {
+            if (!user) return;
+            await saveWorkspacePreference(getSupabase(), user.id, role);
+            setPerspective(role);
+          });
+        }}><option value="client">Client</option><option value="freelancer">Freelancer</option></select>
+        <p>Saved for your account. Switching views does not change project memberships.</p>
         <button disabled={task.busy} onClick={() => void task.run(signOut)}>
           Sign out
         </button>

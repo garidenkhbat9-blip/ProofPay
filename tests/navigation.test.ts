@@ -10,7 +10,8 @@ test("Explore renders both normal login destinations and labels the separate sim
   const html = renderToStaticMarkup(createElement(ExplorePage));
   for (const role of ["client", "freelancer"])
     assert.ok(html.includes(`/login?next=%2Fdashboard%3Fperspective%3D${role}`));
-  assert.match(html, /Secure sign-in is still required/);
+  assert.match(html, /Sign in with your own account/);
+  assert.doesNotMatch(html, /matching dedicated account/);
   assert.match(html, /does not sign you in, switch accounts, or grant project access/);
   assert.match(html, /Simulated demo/);
   assert.doesNotMatch(html, /Judge Access|Judge guide|Your Sandbox project needs setup/);
