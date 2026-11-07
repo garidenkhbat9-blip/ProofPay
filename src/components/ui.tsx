@@ -12,6 +12,7 @@ export function Icon({ name = "folder" }: { name?: string }) {
     clock: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 7v5l3 2",
     gear: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8M9 3h6l1 3 3 1 2 5-2 5-3 1-1 3H9l-1-3-3-1-2-5 2-5 3-1z",
     menu: "M4 6h16M4 12h16M4 18h16",
+    compass: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M16 8l-3 5-5 3 3-5z",
     close: "m6 6 12 12M6 18 18 6",
     plus: "M12 5v14M5 12h14",
     eye: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12ZM15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0",
@@ -57,6 +58,12 @@ export function Notice({ children }: { children: ReactNode }) {
 export function Empty({ children }: { children: ReactNode }) {
   return <div className="card empty">{children}</div>;
 }
+export function EmptyState({ icon = "folder", title, description, children }: {
+  icon?: string; title: string; description: string; children?: ReactNode;
+}) {
+  return <section className="workflow-empty"><span className="workflow-empty-icon"><Icon name={icon} /></span>
+    <div><h2>{title}</h2><p>{description}</p>{children && <div className="actions">{children}</div>}</div></section>;
+}
 export function Badge({
   children,
   status = "",
@@ -70,10 +77,14 @@ export function Modal({
   title,
   onClose,
   children,
+  className,
+  busy = false,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  className?: string;
+  busy?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -85,15 +96,16 @@ export function Modal({
   return (
     <dialog
       ref={ref}
+      className={className}
       aria-labelledby={titleId}
-      onCancel={onClose}
+      onCancel={(event) => { event.preventDefault(); if (!busy) onClose(); }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (!busy && e.target === e.currentTarget) onClose();
       }}
     >
       <div className="dialoghead">
         <h2 id={titleId}>{title}</h2>
-        <button className="ghost" aria-label="Close dialog" onClick={onClose}>
+        <button className="ghost" aria-label="Close dialog" disabled={busy} onClick={onClose}>
           <Icon name="close" />
         </button>
       </div>

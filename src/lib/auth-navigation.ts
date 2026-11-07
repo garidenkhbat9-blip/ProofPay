@@ -7,7 +7,7 @@ export function needsAccountConfirmation(
   authenticatedHere: boolean,
   confirmedAccount: string | null,
 ) {
-  return !!userId && !!entryPerspective(destination) && !authenticatedHere && confirmedAccount !== userId;
+  return !!userId && !authenticatedHere && confirmedAccount !== userId;
 }
 
 export function authenticationReturn(explicit: string | null, pending: string | null) {

@@ -2,6 +2,9 @@ export type Role = "client" | "freelancer";
 export type Category = "website" | "design" | "video";
 export interface Project {
   id: string;
+  created_by?: string;
+  archived_at?: string | null;
+  archive_revision?: number;
   title: string;
   description: string;
   work_category: Category;
@@ -101,6 +104,8 @@ export interface Review {
   created_at: string;
 }
 export interface CloudData {
+  payments: WorkflowPayment[];
+  paymentError: string;
   projects: Project[];
   members: Member[];
   profiles: Profile[];
@@ -118,6 +123,8 @@ export interface CloudData {
   deliveryError: string;
 }
 export const emptyCloud = (): CloudData => ({
+  payments: [],
+  paymentError: "",
   projects: [],
   members: [],
   profiles: [],
@@ -140,4 +147,14 @@ export interface MilestoneDraft {
   amount: number;
   due_date: string;
   criteria: string[];
+}
+export interface WorkflowPayment {
+  id: string;
+  project_id: string;
+  milestone_id: string;
+  agreement_id: string;
+  submission_id: string;
+  status: string;
+  last_verified_at: string | null;
+  reconciliation_status: string;
 }

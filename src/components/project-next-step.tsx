@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { projectStages, type ProjectNextStep } from "@/lib/project-workflow";
+import { type ProjectNextStep } from "@/lib/project-workflow";
 
 export function ProjectNextAction({
   step,
@@ -15,16 +15,29 @@ export function ProjectNextAction({
       aria-label="Current stage and next action"
     >
       <ol className="project-progress" aria-label="Project progress">
-        {projectStages.map((stage, index) => (
+        {step.stages?.map((stage, index) => (
           <li
-            key={stage}
-            aria-current={index === step.stage ? "step" : undefined}
-            className={index < step.stage ? "complete" : ""}
+            key={stage.label}
+            aria-current={stage.state === "current" ? "step" : undefined}
+            className={stage.state}
+            title={stage.detail}
           >
             <span aria-hidden="true">
-              {index < step.stage ? "✓" : index + 1}
+              {stage.state === "complete" ? "✓" : index + 1}
             </span>
-            {stage}
+            <div>
+              {stage.label}
+              <small>
+                {
+                  {
+                    complete: "Complete",
+                    current: "Current",
+                    blocked: "Blocked",
+                    not_started: "Not started",
+                  }[stage.state]
+                }
+              </small>
+            </div>
           </li>
         ))}
       </ol>
@@ -33,6 +46,8 @@ export function ProjectNextAction({
           <p className="project-next-status">{step.status}</p>
           <h2>{step.title}</h2>
           <p>{step.description}</p>
+          <p className="workflow-actor">Next: {step.actor}</p>
+          {step.blocker && <p className="workflow-blocker">{step.blocker}</p>}
         </div>
         {step.action === "invite" && onInvite ? (
           <button className="primary" onClick={onInvite}>

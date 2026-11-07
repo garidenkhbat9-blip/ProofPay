@@ -4,6 +4,7 @@ import "@fontsource-variable/dm-sans";
 import "@fontsource-variable/manrope";
 import "./globals.css";
 import "./precision.css";
+import "./workspace.css";
 export const metadata: Metadata = {
   title: { default: "ProofPay — Work, with proof.", template: "%s · ProofPay" },
   description:

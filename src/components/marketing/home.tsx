@@ -32,7 +32,7 @@ export function HomePage() {
               d={"M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3M8 12l3 3 5-6"}
             ></path>
           </svg>
-          {" THE TRUST LAYER FOR DIGITAL WORK"}
+          {" FOR CLIENTS & FREELANCERS"}
         </div>
         <h1>
           {"Great work deserves"}
@@ -40,9 +40,9 @@ export function HomePage() {
           <span>{"a clear agreement."}</span>
         </h1>
         <p>
-          {"Agree on the work. Review the proof."}
+          {"Set the milestones. Deliver the work."}
           <br />
-          {"Move forward with confidence, on both sides."}
+          {"Keep the agreement and every review in one place."}
         </p>
         <div className={"herobuttons"}>
           <Link className={"buttonlike forest"} href={"/explore"}>
@@ -59,7 +59,7 @@ export function HomePage() {
           </Link>
         </div>
         <span className={"herotiny"}>
-          Choose your perspective. Secure access to the real workspace.
+          A shared workspace, from the first brief to the final review.
         </span>
         <div className={"hero-orbit"} aria-hidden={"true"}></div>
       </section>
@@ -235,11 +235,11 @@ export function HomePage() {
       </section>
       <section className={"featuresection"}>
         <div className={"centerheading"}>
-          <span className={"microtag"}>{"A CLEARER WAY TO COLLABORATE"}</span>
+          <span className={"microtag"}>{"FROM BRIEF TO HANDOFF"}</span>
           <h2>
-            {"Less ambiguity."}
+            {"The brief. The work."}
             <br />
-            {"More shared understanding."}
+            {"The record of what was agreed."}
           </h2>
           <p>{"Keep the brief, the work, and the decision connected."}</p>
         </div>

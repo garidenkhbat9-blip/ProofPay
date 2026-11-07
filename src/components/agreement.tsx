@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useWorkspace } from "./provider";
 import { ProjectTabs } from "./projects";
-import { Heading, Badge, Empty, Modal, FormMessage, useTask } from "./ui";
+import { Heading, Badge, Empty, EmptyState, Modal, FormMessage, useTask, Notice } from "./ui";
+import { agreementGuidance } from "@/lib/agreement-guidance";
 import {
   memberRole,
   latestAgreement,
@@ -48,24 +49,23 @@ export function AgreementPage({ id }: { id: string }) {
   const a = editing ? editing.base : requested ? versions.find((a) => a.id === requested) : latest;
   const current = !!a && a.id === latest?.id,
     editable = role === "client" && p.status !== "archived";
+  const guidance = agreementGuidance(data, p, user?.id);
   if (!a)
     return (
       <>
         <ProjectTabs id={id} tab="agreement" />
         <Heading title="Agreement" />
-        <Empty>
-          <p>
-            {requested
-              ? "Agreement version not found."
-              : "Define the scope, milestones and measurable requirements."}
-          </p>
-          {editable && !requested && (
-            <button className="primary" onClick={() => setEditing({})}>
-              Create agreement
-            </button>
-          )}
+        {!requested && !guidance.hasFreelancer && p.status !== "archived" && <EmptyState icon="user" title={guidance.teamTitle} description={guidance.teamDescription}>
+          {guidance.canInvite && <Link className="buttonlike forest" href={guidance.teamHref}>{guidance.teamLabel} →</Link>}
+        </EmptyState>}
+        <EmptyState icon="report" title={requested ? "Agreement version not found." : "No agreement yet."}
+          description={requested ? "This version is not available to your account. Open the latest version to continue." : p.status === "archived" ? "This project is archived. Reopen an eligible draft from the project actions before adding an agreement." : role === "client"
+            ? "Define scope, deliverables, milestones, amounts and acceptance requirements. You can save a draft before a freelancer joins. Both parties must accept the final version before delivery. Creating or accepting an agreement does not trigger payment."
+            : "The client prepares the scope, deliverables, milestones, amounts and acceptance requirements. You both review and accept the latest version before delivery. Acceptance does not trigger payment."}>
+          {guidance.canDraft && !requested && <button className={guidance.hasFreelancer ? "primary" : ""} onClick={() => setEditing({})}>Create agreement draft</button>}
+          {p.status === "archived" && <Link href={`/projects/${id}`}>View project records →</Link>}
           {requested && <Link href={"/projects/" + id + "/agreement"}>Open latest version</Link>}
-        </Empty>
+        </EmptyState>
         {editing && (
           <AgreementEditor project={p} onClose={() => setEditing(null)} />
         )}
@@ -95,6 +95,10 @@ export function AgreementPage({ id }: { id: string }) {
           )}
         </div>
       </Heading>
+      {!hasFreelancer && p.status !== "archived" && <EmptyState icon="user" title={guidance.teamTitle} description={guidance.teamDescription}>
+        {guidance.canInvite && <Link className="buttonlike forest" href={guidance.teamHref}>{guidance.teamLabel} →</Link>}
+      </EmptyState>}
+      {!milestones.length && <Notice>This version has no milestones. {role === "client" ? "Create a new version with at least one milestone before delivery." : "Ask the client to add milestones in a new version."}</Notice>}
       <div className="agreementlayout">
         <section>
           <div className="card">
@@ -103,7 +107,7 @@ export function AgreementPage({ id }: { id: string }) {
               <Badge status={bothAccepted(data, a.id) ? "approved" : ""}>
                 {bothAccepted(data, a.id)
                   ? "Both accepted"
-                  : "Awaiting acceptance"}
+                  : hasFreelancer ? "Awaiting acceptance" : "Draft · freelancer needed"}
               </Badge>
             </div>
             <p className="preservelines">{a.scope}</p>
@@ -252,7 +256,7 @@ function AgreementEditor({
   }
   return (
     <Modal
-      title={latest ? "Create a new version" : "Create agreement"}
+      title={latest ? "Create a new version" : "Create agreement draft"}
       onClose={onClose}
     >
       <form

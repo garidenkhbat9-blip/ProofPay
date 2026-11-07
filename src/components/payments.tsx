@@ -2,7 +2,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useWorkspace } from "./provider";
-import { Badge, Empty, Heading, Notice } from "./ui";
+import { Badge, EmptyState, Heading, Notice } from "./ui";
+import { projectTotals } from "@/lib/project-management";
 import { bothAccepted, latestAgreement, memberRole, money, revisions } from "@/lib/domain";
 import { getSupabase } from "@/lib/supabase";
 import { checkoutUrl, paymentLabels, type Payment, type PaymentStatus } from "@/lib/payments/model";
@@ -90,7 +91,7 @@ export function PaymentWorkspace() {
     <Heading title={perspective === "client" ? "Payments" : "Earnings"} subtitle="PayPal Sandbox · Test payments only">
       <button disabled={!!busy} onClick={() => void refresh()}>Refresh history</button>
     </Heading>
-    <section className="overview"><div className="stat"><div className="statlabel">Planned project budget · not collected</div><div className="statvalue">{money(projects.reduce((sum, p) => sum + Number(p.budget_amount), 0))}</div></div></section>
+    <section className="overview"><div className="stat"><div className="statlabel">Active planned budget · excludes archived projects · not collected</div><div className="statvalue">{money(projectTotals(projects).plannedBudget)}</div></div></section>
     <Notice>The assigned freelancer invoices the project client using their verified Sandbox merchant account. Approval alone does not make a payment.</Notice>
     <PaymentProblem issue={loadIssue} /><PaymentProblem issue={result?.setupError || null} /><PaymentProblem issue={actionIssue} />
     {!result && !loadIssue && <p role="status">Loading payment history...</p>}
@@ -120,7 +121,10 @@ export function PaymentWorkspace() {
         <button className="primary" disabled={!!busy} onClick={() => void action(m.id, `/api/projects/${project.id}/milestones/${m.id}/invoice`)}>{busy === m.id ? "Preparing invoice..." : "Create & send Sandbox invoice"}</button>
         : <p>{ready ? "The assigned freelancer must have a verified merchant connection before issuing the invoice." : "Both parties must accept the agreement and the client must approve the delivery."}</p>}
     </section>)}
-    {result && !rows.length && !milestones.length && <Empty>No milestone invoices yet. <Link href="/projects">View projects</Link></Empty>}
-    {result && <section className="card"><h2>Payment history</h2>{result.history.filter((h) => rows.some((p) => p.id === h.payment_id)).map((h) => <p key={h.id}>{new Date(h.created_at).toLocaleString()} · {rows.find((p) => p.id === h.payment_id)?.invoice_number} · {paymentLabels[h.status] || "Action Required"}</p>)}{!result.history.length && <p>No verified payment events yet.</p>}{result.truncated && <p>Showing recent records only. Contact support for older history.</p>}</section>}
+    {result && !rows.length && <EmptyState icon="wallet" title="No invoices yet."
+      description={perspective === "client" ? "Invoices become available through the approved milestone workflow. The assigned freelancer needs a verified Sandbox merchant connection. Your planned budget is not collected revenue, and approval does not make a payment." : "After the client approves a milestone, the assigned freelancer can invoice through a verified Sandbox merchant connection. Approval alone does not create or pay an invoice."}>
+      <Link className="buttonlike forest" href="/projects">{perspective === "client" ? "View projects" : "View my jobs"} →</Link>
+    </EmptyState>}
+    {result && (rows.length > 0 || result.truncated) && <section className="card"><h2>Payment history</h2>{result.history.filter((h) => rows.some((p) => p.id === h.payment_id)).map((h) => <p key={h.id}>{new Date(h.created_at).toLocaleString()} · {rows.find((p) => p.id === h.payment_id)?.invoice_number} · {paymentLabels[h.status] || "Action Required"}</p>)}{!result.history.some(h => rows.some(p => p.id === h.payment_id)) && <p>No verified payment events for these projects yet.</p>}{result.truncated && <p>Showing recent records only. Contact support for older history.</p>}</section>}
   </>;
 }

@@ -1,0 +1,29 @@
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
+import { authOrigin, oauthDestination } from "@/lib/google-auth";
+import { oauthClient } from "@/lib/server/oauth";
+export async function GET(request: Request) {
+  let origin: string;
+  try { origin = authOrigin(request.url); } catch { return new Response("Invalid application origin", { status: 400 }); }
+  const jar = await cookies();
+  let destination = "/login?oauth_error=confirmation";
+  try {
+    const url = new URL(request.url), code = url.searchParams.get("code");
+    const attempt = jar.get("proofpay-oauth-attempt")?.value;
+    if (!attempt || attempt !== url.searchParams.get("attempt")) throw Error("attempt");
+    if (url.searchParams.has("error") || !code || code.length > 4096) throw Error("code");
+    const client = await oauthClient(origin.startsWith("https:"));
+    const { data, error } = await client.auth.exchangeCodeForSession(code);
+    if (error || !data.session) throw Error("exchange");
+    const verified = await client.auth.getUser(data.session.access_token);
+    const user = verified.data.user;
+    if (verified.error || !user?.email_confirmed_at || !user.email || user.id !== data.session.user.id) throw Error("identity");
+    const profile = await client.from("profiles").select("id").eq("id", user.id).maybeSingle();
+    if (profile.error || !profile.data) { destination = "/login?oauth_error=profile"; }
+    else destination = oauthDestination(user.user_metadata?.preferred_workspace);
+  } catch { /* Never log callback codes, provider details or session secrets. */ }
+  jar.delete("proofpay-oauth-attempt");
+  const response = NextResponse.redirect(new URL(destination, origin), 303);
+  response.headers.set("Cache-Control", "no-store"); response.headers.set("Referrer-Policy", "no-referrer");
+  return response;
+}

@@ -6,6 +6,7 @@ import {
 } from "@/lib/server/http";
 import { generateAgreementDraft } from "@/lib/server/gemini-agreement";
 import { createRequestGate } from "@/lib/request-gate";
+import { GeminiError } from "@/lib/gemini";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -57,6 +58,10 @@ export async function POST(
       release();
     }
   } catch (error) {
-    return apiErrorResponse(error);
+    if (error instanceof GeminiError) console.error("proofpay-gemini", error.diagnostic);
+    const response = apiErrorResponse(error);
+    if (response.status === 429 && error instanceof GeminiError && error.diagnostic.retryAfterSeconds)
+      response.headers.set("Retry-After", String(Math.max(30, error.diagnostic.retryAfterSeconds)));
+    return response;
   }
 }

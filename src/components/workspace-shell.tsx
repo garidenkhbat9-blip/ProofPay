@@ -35,7 +35,6 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
   const [mobile, setMobile] = useState(false);
   const sidebar = useRef<HTMLElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
-  const perspectiveMenu = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     const media = window.matchMedia("(max-width: 720px)");
     const update = () => {
@@ -48,7 +47,6 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
   }, []);
   useEffect(() => {
     setOpen(false);
-    if (perspectiveMenu.current) perspectiveMenu.current.open = false;
   }, [path]);
   useEffect(() => {
     if (!mobile || !open) return;
@@ -177,37 +175,12 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           </span>
           ProofPay
         </Link>
-        <div className="workspace">
-          <Icon name={perspective === "client" ? "briefcase" : "user"} />
-          <div>
-            <strong>{perspective === "client" ? "Client workspace" : "Freelancer workspace"}</strong>
-            <small>{perspective === "client" ? "Manage work and review evidence" : "Deliver work and track reviews"}</small>
-          </div>
-        </div>
-        <details className="workspace-perspective" ref={perspectiveMenu}>
-          <summary>Switch perspective</summary>
-          <div>
-            <label htmlFor="workspace-perspective">View workspace as</label>
-            <select id="workspace-perspective" className="field" value={perspective} aria-describedby="perspective-help" onChange={(event) => {
-              const next = event.target.value;
-              if (next !== "client" && next !== "freelancer") return;
-              setPerspective(next);
-              if (perspectiveMenu.current) { perspectiveMenu.current.open = false; perspectiveMenu.current.querySelector("summary")?.focus(); }
-              setOpen(false);
-              router.push("/dashboard");
-            }}>
-              <option value="client">Client</option><option value="freelancer">Freelancer</option>
-            </select>
-            <p id="perspective-help">You can work as a Client on one project and a Freelancer on another.</p>
-            <p>This keeps the same signed-in account and project permissions.</p>
-            <Link href="/settings">Use a different account</Link>
-          </div>
-        </details>
         {nav.map(([href, icon, title]) => (
           <Link
             key={href}
             className={`nav ${path === href || path.startsWith(href + "/") ? "active" : ""}`}
             href={href}
+            data-tour={href === "/projects" ? "projects" : href === "/invitations" ? "invitations" : href === "/agreements" ? "workflow" : undefined}
             aria-current={
               path === href || path.startsWith(href + "/") ? "page" : undefined
             }
@@ -246,6 +219,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
               className="ghost mobiletoggle"
               onClick={() => setOpen(!open)}
               aria-label="Open menu"
+              data-tour="mobile-navigation"
               aria-expanded={open}
               aria-controls="workspace-navigation"
             >

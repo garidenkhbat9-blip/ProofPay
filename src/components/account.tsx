@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useWorkspace } from "./provider";
-import { Heading, Empty, FormMessage, useTask } from "./ui";
+import { Heading, EmptyState, FormMessage, useTask } from "./ui";
 import { memberRole, money } from "@/lib/domain";
 import { PaymentWorkspace } from "./payments";
 import { workspaceIdentity } from "@/lib/workspace-onboarding";
@@ -38,7 +38,7 @@ export function PaymentsPage() {
   return <PaymentWorkspace />;
 }
 export function ActivityPage() {
-  const { data, user, perspective } = useWorkspace();
+  const { data, user, perspective, refresh } = useWorkspace();
   const ids = new Set(
     data.projects
       .filter((p) => memberRole(data, p.id, user?.id) === perspective)
@@ -86,7 +86,7 @@ export function ActivityPage() {
         title="Activity"
         subtitle="Recent agreement and delivery records."
       />
-      <div className="delivery-list">
+      <div className={events.length ? "delivery-list" : undefined}>
         {events.map((e) => (
           <Link className="delivery-row" key={e.id} href={e.href}>
             <div>
@@ -96,7 +96,10 @@ export function ActivityPage() {
             <span>→</span>
           </Link>
         ))}
-        {!events.length && <div className="empty">No activity yet.</div>}
+        {!events.length && <EmptyState icon="clock" title={data.agreementError || data.deliveryError ? "Activity unavailable." : "No activity recorded yet."}
+          description={data.agreementError || data.deliveryError ? "Some agreement or delivery records could not be loaded. Refresh to check the actual history." : "Saved agreement versions, submitted revisions and client review decisions appear here as they happen."}>
+          {data.agreementError || data.deliveryError ? <button onClick={() => void refresh()}>Refresh workspace</button> : <Link className="buttonlike forest" href="/projects">{perspective === "client" ? "View projects" : "View my jobs"} →</Link>}
+        </EmptyState>}
       </div>
     </>
   );

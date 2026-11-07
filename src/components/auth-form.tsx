@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   useEffect,
+  useRef,
   useState,
   type FormEvent,
   type ChangeEvent,
@@ -16,6 +17,8 @@ import { authenticationReturn, needsAccountConfirmation } from "@/lib/auth-navig
 import { useWorkspace } from "./provider";
 import { Icon, useTask, FormMessage } from "./ui";
 import { PasswordField } from "./password-field";
+import { GoogleAuthButton } from "./google-sign-in";
+import { authCooldown, deferAuth } from "@/lib/auth-cooldown";
 import {
   authErrorMessage,
   validateAuthField,
@@ -28,6 +31,11 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     router = useRouter(),
     params = useSearchParams();
   const task = useTask();
+  const [googlePending, setGooglePending] = useState(false);
+  const requestLock = useRef(false);
+  const [pendingEmail, setPendingEmail] = useState("");
+  const [cooldown, setCooldown] = useState(0);
+  useEffect(() => { const timer = setInterval(() => setCooldown(authCooldown()), 1000); return () => clearInterval(timer); }, []);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<AuthErrors>({});
   const [submitted, setSubmitted] = useState(false);
@@ -42,7 +50,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     forgot = mode === "forgot",
     reset = mode === "reset";
   const destination =
-    judge && signup ? judgeDestination(role) : requestedDestination;
+    signup ? judgeDestination(role) : requestedDestination;
   useEffect(() => {
     if (
       ready &&
@@ -83,7 +91,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   }
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (task.busy || submitted || !ready || authError) return;
+    if (googlePending || requestLock.current || authCooldown() || task.busy || submitted || pendingEmail || !ready || authError) return;
     const form = e.currentTarget,
       f = new FormData(form);
     const fields: AuthField[] = [
@@ -107,10 +115,10 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       (form.elements.namedItem(firstInvalid) as HTMLInputElement)?.focus();
       return;
     }
+    requestLock.current = true;
     void task.run(async () => {
-      if (reset && !user)
-        throw new Error("Open the password reset link from your email first.");
       try {
+        if (reset && !user) throw new Error("Open the password reset link from your email first.");
         const client = getSupabase(),
           email = String(f.get("email") || "").trim(),
           password = String(f.get("password") || "");
@@ -126,16 +134,19 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               },
               emailRedirectTo:
                 location.origin +
-                "/login" +
-                (params.has("next") ? "?next=" + encodeURIComponent(destination) : ""),
+                "/auth/confirm",
             },
           });
           if (error) throw error;
           if (!data.session) {
+            setPendingEmail(email);
+            deferAuth(); setCooldown(authCooldown());
             setMessage(
               "Check your inbox for a confirmation link. If you already have an account, sign in or reset your password.",
             );
           } else {
+            const verified = await client.auth.getUser();
+            if (verified.error || verified.data.user?.id !== data.session.user.id || !verified.data.user.email_confirmed_at) throw Error("Account verification failed. Sign in again.");
             setMessage("Account created. Opening your workspace…");
             setSubmitted(true);
           }
@@ -154,21 +165,26 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           setSubmitted(true);
           router.replace(destination);
         } else {
-          const { error } = await client.auth.signInWithPassword({
+          const { data: signedIn, error } = await client.auth.signInWithPassword({
             email,
             password,
           });
           if (error) throw error;
           setMessage("Signed in. Opening your workspace…");
+          const verified = await client.auth.getUser();
+          if (verified.error || !verified.data.user?.email_confirmed_at || verified.data.user.id !== signedIn.user?.id) throw Error("Confirm your email before signing in.");
           setSubmitted(true);
         }
       } catch (error) {
         throw new Error(authErrorMessage(error));
+      } finally {
+        requestLock.current = false;
+        setCooldown(authCooldown());
       }
     });
   }
   return (
-    <div className="authpage">
+    <div className={`authpage auth-polished ${signup ? "auth-signup" : "auth-signin"}`}>
       <header>
         <Link className="brand" href="/">
           <span className="brandmark">
@@ -209,7 +225,22 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           </Link>
         </section>
         <section className="authcard">
-          {ready && user && !recovery && judge && !submitted && (mode === "login" || signup) ? (
+          {params.has("oauth_error") && <p role="alert">{params.get("oauth_error") === "profile" ? "Your account profile could not be loaded. Contact support or retry sign-in." : "Google sign-in was cancelled or could not be confirmed. Start again; your previous account has not been used as a substitute."}</p>}
+          {pendingEmail ? <>
+            <h2>Check your email</h2>
+            <p>Registration was submitted for {pendingEmail}. Email verification is pending. If you already registered, sign in instead of creating another account.</p>
+            <p><Link href={"/login?next=" + encodeURIComponent(destination)}>Already confirmed? Sign in.</Link></p>
+            <FormMessage error={task.error} /><p role="status">{message}</p>
+            <button disabled={task.busy || cooldown > 0} onClick={() => {
+              if (requestLock.current || authCooldown()) return;
+              requestLock.current = true; deferAuth(); setCooldown(authCooldown());
+              void task.run(async () => { try {
+                const { error } = await getSupabase().auth.resend({ type: "signup", email: pendingEmail, options: { emailRedirectTo: location.origin + "/auth/confirm" } });
+                if (error) throw Error(authErrorMessage(error));
+                setMessage("If confirmation is still required, a new email has been requested. Check your inbox.");
+              } finally { requestLock.current = false; setCooldown(authCooldown()); } });
+            }}>{cooldown ? `Resend available in ${cooldown}s` : "Resend confirmation"}</button>
+          </> : ready && user && !recovery && !submitted && (mode === "login" || signup) ? (
             <>
               <div className="auth-judge-context"><Icon name="shield" /><span>Explore ProofPay · {requestedRole === "client" ? "Client" : "Freelancer"} workspace</span></div>
               <h2>Confirm your account</h2>
@@ -221,6 +252,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 <button className="widebutton" disabled={task.busy} onClick={() => void task.run(() => signOut(destination))}>Sign in with a different account</button>
                 <Link href="/dashboard">Back to my workspace</Link>
               </div>
+              <div className="authdivider">or switch with Google</div>
+              <p className="auth-quiet">Google sign-in replaces the account in this browser.</p>
+              <GoogleAuthButton disabled={task.busy || submitted || !ready} onBusy={setGooglePending} />
             </>
           ) : <>
           {judge && (
@@ -246,7 +280,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           </h2>
           <p>
             {signup
-              ? "Choose how you'll use ProofPay."
+              ? "A clear start for your next collaboration."
               : forgot
                 ? "We will email you a reset link."
                 : reset
@@ -258,7 +292,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           <form onSubmit={submit} noValidate aria-busy={task.busy}>
             {signup && (
               <>
-                <div className="role-picker">
+                <div className="role-picker" role="group" aria-label="How will you use ProofPay?">
                   <button
                     type="button"
                     aria-pressed={role === "client"}
@@ -365,12 +399,13 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             <p role="status" className="authmessage">
               {message}
             </p>
+            {mode === "login" && <Link className="authforgot" href={"/forgot-password?next=" + encodeURIComponent(destination)}>Forgot password?</Link>}
             <button
               className="primary widebutton"
               type="submit"
-              disabled={task.busy || submitted || !ready || !!authError}
+              disabled={googlePending || task.busy || submitted || !ready || !!authError || cooldown > 0}
             >
-              {task.busy
+              {cooldown > 0 ? `Try again in ${cooldown}s` : task.busy
                 ? signup
                   ? "Creating account…"
                   : forgot
@@ -391,11 +426,10 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                           : "Sign in"}
             </button>
           </form>
-          {mode === "login" && (
-            <Link className="authforgot" href={"/forgot-password?next=" + encodeURIComponent(destination)}>
-              Forgot password?
-            </Link>
-          )}
+          {(mode === "login" || signup) && <>
+            <div className="authdivider">{signup ? "or sign up with" : "or continue with"}</div>
+            <GoogleAuthButton disabled={task.busy || submitted || !ready} onBusy={setGooglePending} />
+          </>}
           <p className="authalternate">
             {signup ? "Already have an account?" : "New to ProofPay?"}{" "}
             <Link
@@ -408,10 +442,8 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               {signup ? "Sign in" : "Create an account"}
             </Link>
           </p>
-          <div className="authdivider">Explore without an account</div>
-          <Link className="buttonlike widebutton" href="/demo">
-            Explore simulated demo →
-          </Link>
+          {signup && <p className="auth-quiet">You can hire and freelance with the same account.</p>}
+          <footer className="auth-demo-footer"><span>Just looking around?</span> <Link href="/demo">Explore the simulated demo <span aria-hidden="true">→</span></Link></footer>
           </>}
         </section>
       </main>

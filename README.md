@@ -12,7 +12,7 @@ The white Quiet Precision design is refined in `src/app/precision.css`, keeping 
 
 ## Start in Antigravity (Windows)
 
-1. Install Node.js **22 or newer** (LTS recommended).
+1. Install Node.js **22.15 or newer** (Node 24 LTS recommended; API tests use Node's module hooks).
 2. Extract this ZIP and open the `proofpay-next` folder in Antigravity.
 3. In its terminal, run:
 
@@ -46,7 +46,7 @@ In Supabase Authentication → URL Configuration, add the local development redi
 
 When deploying this Next.js project, add the equivalent HTTPS redirect URLs for that deployment, then set Site URL appropriately. This export does not change the existing private Sites deployment or its access policy. Links generated locally use localhost and are for local testing; share handoff links from a deployed origin for other users.
 
-Google sign-in remains removed, as requested. Email/password, signup confirmation, session persistence, password reset and local sign-out use Supabase Auth. Existing hosted browser sessions do not automatically transfer to localhost: sign in again locally.
+Google sign-in/sign-up now uses Supabase OAuth with a server PKCE callback and shared browser/server session cookies. See [GOOGLE-AUTH-SETUP.md](GOOGLE-AUTH-SETUP.md) for required provider setup and demo verification. Email/password confirmation remains enabled. Old localStorage sessions are not imported into cookie sessions: sign in once again after this upgrade. Production and localhost remain separate sessions.
 
 ## Features carried over
 
@@ -95,7 +95,7 @@ Never put `service_role`, Supabase secret keys, Browserless tokens, Gemini keys 
 
 ## Not connected yet
 
-- AI evidence explanations. Gemini agreement drafting is implemented behind server configuration; live provider behavior still needs verification in the deployed environment.
+- Gemini agreement drafting and client-triggered evidence text analysis are implemented. Live model lookup succeeded, but two bounded structured draft attempts failed (the second timed out); successful generation remains unverified. The evidence assistant reads notes and up to four private UTF-8 TXT/MD/CSV/JSON files, validates exact source quotes, and displays a temporary opinion bound to the agreement version and submission revision. It never approves or pays work. Unsupported files and websites remain `CANNOT_VERIFY`.
 - Browserless/Playwright automated verification and queued verification workers.
 - PayPal live payments, marketplace onboarding and arbitrary-freelancer payouts. Sandbox invoicing requires the separate payment setup described above.
 - Automatic invitation emails or push notifications.
@@ -108,6 +108,7 @@ Files are delivered through signed download URLs; there is no inline execution o
 ```sh
 npm run typecheck
 npm test
+npm run test:sql
 npm run build
 npm start
 ```
@@ -123,7 +124,25 @@ For Vercel: import the project as Next.js, set the two public Supabase variables
 3. Client saves a versioned agreement; both accounts review and accept it.
 4. Client creates a delivery link. Freelancer opens it, adds a file/URL and submits.
 5. Client requests changes with notes. Freelancer submits a new revision.
-6. Client confirms each requirement and approves. Ensure payment stays unconnected.
+6. Client confirms each requirement and approves. Ensure approval alone creates no payment; only the configured merchant freelancer can initiate a separate authorized Sandbox invoice.
 7. Verify an unrelated account cannot read that project or its files; changing workspace perspective must not grant access.
 8. Check revoked/expired links prevent submission while already received evidence remains reviewable against the current agreement.
 9. Test password reset and direct links in a signed-out browser.
+
+## Current hackathon checkpoint
+
+See [HACKATHON-FINAL-STATUS.md](HACKATHON-FINAL-STATUS.md) for executed results, external blockers and changed files; [HACKATHON-PROGRESS.md](HACKATHON-PROGRESS.md) is the resumable checkpoint. Migration `005_payment_claim_eligibility.sql` rechecks eligibility when an invoice lease is acquired and has passed disposable SQL tests. It has **not** been run against the existing database and requires administrator review and approval. Never rerun 001–004 on the existing database.
+
+Continuation: migration 005 and the payment/evidence authorization fixtures now pass in disposable in-memory PostgreSQL via `npm run test:sql`. That command accepts no database URL and never connects to Supabase. Its minimal Auth/Storage tables test SQL policies and RPCs, not the hosted services or concurrent connections. Live application still requires administrator review/approval. See [OWNER-E2E-CHECKLIST.md](OWNER-E2E-CHECKLIST.md) for the remaining deployment and two-account steps. Gemini generation remains blocked: one 348-byte diagnostic request timed out before response headers; retries were stopped.
+
+## Client experience checkpoint — 2026-11-06
+
+Automatic per-user/per-perspective onboarding, clearer workspace surfaces and project browsing/actions are implemented. [CLIENT-EXPERIENCE-STATUS.md](CLIENT-EXPERIENCE-STATUS.md) records the historical 2026-11-06 checkpoint. Its disabled lifecycle UI has since been replaced by the implementation below. `npm run test:components` renders actual React components in local Chrome with isolated account/data adapters on Windows; this does not establish live authenticated behavior.
+
+## Project workflow checkpoint — 2026-11-07
+
+Agreement draft/invitation guidance, six data-driven workflow stages, compact role-specific empty states and a dashboard focused on the next action are implemented. Active counts and planned budgets exclude archives. Approval remains separate from payment.
+
+The owner-only archive/reopen UI, authenticated API and additive [migration 006](migrations/006_project_archive.sql) are prepared and tested locally. **006 has not been applied to the existing database. Archive remains blocked pending owner approval and backend deployment.** It allows only unshared drafts and blocks pending invitations, accepted agreements, delivery history and all financial history. It never deletes records. Review the eligibility, RLS, RPC, migration comparison and rollback limitations in [PROJECT-LIFECYCLE-PROPOSAL.md](PROJECT-LIFECYCLE-PROPOSAL.md). Do not rerun existing migrations or silently deploy the separately proposed 005.
+
+See [PROJECT-WORKFLOW-STATUS.md](PROJECT-WORKFLOW-STATUS.md) for the Mongolian completion report, exact executed checks, changed files, remaining live checks and client/freelancer QA steps. No live transaction, database migration, commit, push or deployment was performed.

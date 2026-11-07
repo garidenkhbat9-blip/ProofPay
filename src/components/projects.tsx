@@ -6,6 +6,7 @@ import { useWorkspace } from "./provider";
 import {
   Heading,
   Empty,
+  EmptyState,
   Badge,
   Icon,
   Notice,
@@ -30,6 +31,9 @@ import { ProjectNextAction } from "./project-next-step";
 import { dashboardGuidance, workspaceIdentity } from "@/lib/workspace-onboarding";
 import { WorkspaceOnboarding, WorkflowHelp } from "./workspace-onboarding";
 import { JudgeWorkspace } from "./judge-workspace";
+import { DashboardTour } from "./dashboard-tour";
+import { ProjectActions } from "./project-actions";
+import { projectTeam, projectTotals, workspaceProjects } from "@/lib/project-management";
 export function ProjectTabs({
   id,
   tab,
@@ -44,6 +48,7 @@ export function ProjectTabs({
           key={t}
           href={"/projects/" + id + (t === "overview" ? "" : "/" + t)}
           className={tab === t ? "selected" : ""}
+          aria-current={tab === t ? "page" : undefined}
         >
           {t[0].toUpperCase() + t.slice(1)}
         </Link>
@@ -54,38 +59,45 @@ export function ProjectTabs({
 function ProjectList({ projects }: { projects: Project[] }) {
   const { data, user } = useWorkspace();
   return projects.length ? (
-    <div className="delivery-list">
+    <div className="managed-project-list">
       {projects.map((p) => {
         const next = projectNextStep(data, p, user?.id);
+        const team = projectTeam(data, p.id);
         return (
-          <Link className="delivery-row" href={"/projects/" + p.id} key={p.id}>
-            <div>
+          <article className="managed-project" key={p.id}>
+            <Link className="managed-project-main" href={"/projects/" + p.id}>
+            <div className="managed-project-title">
               <h3>{p.title}</h3>
               <p>
                 {categories[p.work_category]} ·{" "}
                 {p.due_date ? "Due " + p.due_date : "No due date"}
               </p>
             </div>
-            <Badge>{next?.status || "Project"}</Badge>
-            <strong>{money(p.budget_amount)}</strong>
-            <span>→</span>
-          </Link>
+            <div className="managed-project-budget"><small>Planned budget</small><strong>{money(p.budget_amount)}</strong></div>
+            <div className="managed-project-state"><Badge status={p.status === "archived" ? "archived" : next?.attention ? "pending" : ""}>{next?.status || p.status}</Badge></div>
+            <dl className="managed-project-team"><div><dt>Freelancer</dt><dd>{team.freelancer}</dd></div><div><dt>Invitation</dt><dd className="invitation-state">{team.invitation}</dd></div></dl>
+            <p className="managed-project-next"><span>Next</span> {next?.title || "View project records"}<span aria-hidden="true"> →</span></p>
+            </Link>
+            <ProjectActions project={p} />
+          </article>
         );
       })}
     </div>
   ) : (
-    <Empty>No projects in this perspective yet.</Empty>
+    <Empty><h2>No matching projects</h2><p>Try a different search or filter. Projects appear here after you create one or accept an invitation.</p></Empty>
   );
 }
 export function ProjectsPage() {
   const { data, user, perspective } = useWorkspace();
   const [query, setQuery] = useState(""),
-    [category, setCategory] = useState("all");
-  const projects = data.projects.filter(
+    [category, setCategory] = useState("all"),
+    [status, setStatus] = useState("all");
+  const owned = workspaceProjects(data, user?.id, perspective);
+  const projects = owned.filter(
     (p) =>
-      memberRole(data, p.id, user?.id) === perspective &&
       p.title.toLowerCase().includes(query.toLowerCase()) &&
-      (category === "all" || p.work_category === category),
+      (category === "all" || p.work_category === category) &&
+      (status === "all" || (status === "open" ? p.status !== "archived" : p.status === "archived")),
   );
   return (
     <>
@@ -120,7 +132,11 @@ export function ProjectsPage() {
             </option>
           ))}
         </select>
+        <select className="field" aria-label="Project status" value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="all">All statuses</option><option value="open">Open projects</option><option value="archived">Archived</option>
+        </select>
       </div>
+      <p className="project-result-count" role="status">{projects.length} of {owned.length} {perspective === "client" ? "projects" : "jobs"}</p>
       <ProjectList projects={projects} />
     </>
   );
@@ -132,19 +148,17 @@ export function Dashboard({ projectIds = [] }: { projectIds?: string[] }) {
   const progressUnavailable = !!(data.agreementError || data.deliveryError);
   const current = currentDeliveries(
     data,
-    projects.map((p) => p.id),
+    projects.filter((p) => p.status !== "archived").map((p) => p.id),
   );
   const waiting = current.filter((s) => s.status === "submitted").length;
   const approved = current.filter((s) => s.status === "approved").length;
   const changesReq = current.filter((s) => s.status === "changes").length;
-  const totalBudget = projects.reduce(
-    (sum, p) => sum + Number(p.budget_amount),
-    0,
-  );
+  const totals = projectTotals(projects);
   const hasProjects = projects.length > 0;
   return (
     <>
-      {hasProjects && <div className="dash-welcome">
+      <div className="dashboard-toolbar" data-tour="overview">
+      {hasProjects ? <div className="dash-welcome">
         <span className="judge-eyebrow">{perspective === "client" ? "CLIENT" : "FREELANCER"} WORKSPACE</span>
         <h1>{greeting}</h1>
         <p>
@@ -152,7 +166,12 @@ export function Dashboard({ projectIds = [] }: { projectIds?: string[] }) {
             ? "Your projects and the work ready for your review."
             : "Your work, delivery updates and next steps."}
         </p>
-      </div>}
+      </div> : <span className="judge-eyebrow">{perspective === "client" ? "CLIENT" : "FREELANCER"} WORKSPACE</span>}
+      <div className="dashboard-tools">
+        {perspective === "client" && <Link className="buttonlike forest" href="/projects/new" data-tour="new-project"><Icon name="plus" /> New project</Link>}
+      </div>
+      </div>
+      <DashboardTour />
       {data.invitationError && <Notice>Invitation status is unavailable. <button onClick={() => void refresh()}>Refresh workspace</button></Notice>}
       {progressUnavailable && <Notice>Some agreement or delivery records could not be loaded. Progress is unavailable until these records are restored. <button onClick={() => void refresh()}>Refresh workspace</button></Notice>}
       {!hasProjects && otherProjects.length > 0 && <Notice>You have {otherProjects.length} project{otherProjects.length === 1 ? "" : "s"} as a {otherPerspective === "client" ? "Client" : "Freelancer"} with this account. <button onClick={() => setPerspective(otherPerspective)}>View {otherPerspective === "client" ? "Client" : "Freelancer"} projects</button></Notice>}
@@ -169,7 +188,9 @@ export function Dashboard({ projectIds = [] }: { projectIds?: string[] }) {
             <div><span className="judge-eyebrow">{nextActions[0].step.attention ? "YOUR NEXT ACTION" : "CURRENT PROJECT STATUS"}</span>
               <p className="dashboard-next-project">{nextActions[0].project.title}</p>
               <h2 id="dashboard-next-title">{nextActions[0].step.title}</h2>
-              <p>{nextActions[0].step.description}</p></div>
+              <p>{nextActions[0].step.description}</p>
+              <p className="workflow-actor">Next: {nextActions[0].step.actor}</p>
+              {nextActions[0].step.blocker && <p className="workflow-blocker">{nextActions[0].step.blocker}</p>}</div>
             <Link className="buttonlike forest" href={nextActions[0].step.href}>{nextActions[0].step.label} <span aria-hidden="true">→</span></Link>
           </section>}
           <div className="dash-stats">
@@ -179,10 +200,10 @@ export function Dashboard({ projectIds = [] }: { projectIds?: string[] }) {
                 <Icon name="folder" />
               </div>
               <div className="dash-stat-value">
-                {projects.filter((p) => p.status !== "archived").length}
+                {totals.active}
               </div>
               <div className="dash-stat-foot">
-                {projects.filter((p) => p.status === "archived").length}{" "}
+                {totals.archived}{" "}
                 archived
               </div>
             </div>
@@ -208,25 +229,26 @@ export function Dashboard({ projectIds = [] }: { projectIds?: string[] }) {
             </div>
             <div className="dash-stat">
               <div className="dash-stat-label">
-                Planned budget
+                Active planned budget
                 <Icon name="wallet" />
               </div>
-              <div className="dash-stat-value">{money(totalBudget)}</div>
-              <div className="dash-stat-foot">USD · planned, not collected</div>
+              <div className="dash-stat-value">{money(totals.plannedBudget)}</div>
+              <div className="dash-stat-foot">USD · excludes archived projects · not collected</div>
             </div>
           </div>
           <div className="dash-grid">
             <div>
-              {nextActions.length > 0 && (
-                <div className="dash-section" style={{ marginBottom: 20 }}>
+              {nextActions.length > 1 && (
+                <details className="dashboard-other-actions">
+                  <summary>Other project next steps <span>{nextActions.length - 1}</span></summary>
+                <div className="dash-section">
                   <div className="dash-section-head">
                     <h2>Project next steps</h2>
                     <span>
-                      {nextActions.length} project
-                      {nextActions.length !== 1 ? "s" : ""}
+                      {nextActions.length - 1} remaining
                     </span>
                   </div>
-                  {nextActions.slice(0, 5).map(({ project, step }) => (
+                  {nextActions.slice(1).map(({ project, step }) => (
                     <Link
                       className="dash-action"
                       href={step.href}
@@ -246,6 +268,7 @@ export function Dashboard({ projectIds = [] }: { projectIds?: string[] }) {
                     </Link>
                   ))}
                 </div>
+                </details>
               )}
               <div className="dash-section">
                 <div className="dash-section-head">
@@ -256,32 +279,7 @@ export function Dashboard({ projectIds = [] }: { projectIds?: string[] }) {
                     Refresh
                   </button>
                 </div>
-                {projects.length ? (
-                  projects.map((p) => {
-                    const next = projectNextStep(data, p, user?.id);
-                    return (
-                      <Link
-                        className="dash-project-row"
-                        href={"/projects/" + p.id}
-                        key={p.id}
-                      >
-                        <div className="dash-project-icon">
-                          <Icon name="folder" />
-                        </div>
-                        <div>
-                          <strong>{p.title}</strong>
-                          <p>
-                            {categories[p.work_category]} ·{" "}
-                            {p.due_date ? "Due " + p.due_date : "No due date"}
-                          </p>
-                        </div>
-                        <span>{money(p.budget_amount)}</span>
-                      </Link>
-                    );
-                  })
-                ) : (
-                  <div className="dash-empty-row">No projects yet.</div>
-                )}
+                <ProjectList projects={projects} />
               </div>
             </div>
             <aside>
@@ -331,18 +329,6 @@ export function Dashboard({ projectIds = [] }: { projectIds?: string[] }) {
                   Approval records acceptance. Payment is a separate step.
                 </div>
               </div>
-              {perspective === "client" && (
-                <div className="dash-aside-card">
-                  <h3>Quick actions</h3>
-                  <Link
-                    className="buttonlike widebutton"
-                    href="/projects/new"
-                    style={{ display: "flex", fontSize: 13 }}
-                  >
-                    + New project
-                  </Link>
-                </div>
-              )}
             </aside>
           </div>
         </>
@@ -469,19 +455,21 @@ export function ProjectOverview({ id }: { id: string }) {
   return (
     <>
       <ProjectTabs id={id} tab="overview" />
-      <Heading title={p.title} />
+      <Heading title={p.title} subtitle={`${categories[p.work_category]} · ${p.due_date ? "Due " + p.due_date : "No due date"}`}><ProjectActions project={p} /></Heading>
       {next && (
         <ProjectNextAction step={next} onInvite={() => setInvite(true)} />
       )}
       <section className="card">
         <h2>Project brief</h2>
-        <p className="preservelines">{p.description}</p>
+        <p className="preservelines">{p.description || "No project brief added yet."}</p>
         <dl className="details sectionspace">
           {[
             ["Planned budget", money(p.budget_amount)],
             ["Your role", role],
             ["Client", person("client")],
             ["Freelancer", person("freelancer")],
+            ["Project status", p.status],
+            ["Invitation", projectTeam(data, id).invitation],
           ].map(([label, value]) => (
             <div key={label}>
               <dt>{label}</dt>
@@ -489,6 +477,7 @@ export function ProjectOverview({ id }: { id: string }) {
             </div>
           ))}
         </dl>
+        <p className="fieldhelp">The planned budget is not a payment or funds held. Work approval and payment status are recorded separately.</p>
       </section>
       <section className="card" id="project-team">
         <div className="sectionhead">
@@ -605,7 +594,7 @@ function InvitationList({
                 </small>
               </div>
               <div className="invitationactions">
-                <Badge status={status === "accepted" ? "approved" : ""}>
+                <Badge status={status === "accepted" ? "approved" : status}>
                   {status}
                 </Badge>
                 {can && (
@@ -710,15 +699,19 @@ export function InvitationsPage() {
 }
 export function AgreementsList() {
   const { data, user, perspective } = useWorkspace();
+  const projects = workspaceProjects(data, user?.id, perspective);
   return (
     <>
       <Heading title="Agreements" />
+      {!data.agreementError && !projects.length && <EmptyState icon="report" title="No agreements yet."
+        description={perspective === "client" ? "Create a project to define scope, deliverables, milestones and acceptance requirements. Agreements do not trigger payment." : "After you join a project, the client's agreement appears here for your review. Accepting it does not trigger payment."}>
+        <Link className="buttonlike forest" href={perspective === "client" ? "/projects/new" : "/invitations"}>{perspective === "client" ? "Create project" : "View invitations"}</Link>
+      </EmptyState>}
       <div className="delivery-list">
         {data.agreementError ? (
           <Empty>Agreement setup is unavailable: {data.agreementError}</Empty>
         ) : (
-          data.projects
-            .filter((p) => memberRole(data, p.id, user?.id) === perspective)
+          projects
             .map((p) => {
               const a = latestAgreement(data, p.id);
               return (
@@ -738,7 +731,7 @@ export function AgreementsList() {
                       ? bothAccepted(data, a.id)
                         ? "Both accepted"
                         : "Awaiting acceptance"
-                      : "Draft"}
+                      : "Not created"}
                   </Badge>
                   <span>→</span>
                 </Link>

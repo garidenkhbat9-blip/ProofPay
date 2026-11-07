@@ -28,6 +28,7 @@ interface Workspace {
   perspective: Role;
   setPerspective: (role: Role) => void;
   refresh: () => Promise<void>;
+  refreshChecked: () => Promise<void>;
   sync: () => Promise<void>;
   notice: (text: string) => void;
   signOut: (returnTo?: string) => Promise<void>;
@@ -49,8 +50,16 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     epoch = useRef(0),
     timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const queue = useRef<ReturnType<typeof createRefreshQueue> | null>(null);
+  const loadError = useRef("");
   const router = useRouter();
   const refresh = useCallback(() => queue.current?.request() ?? Promise.resolve(), []);
+  const refreshChecked = useCallback(async () => {
+    const account = identity.current, loader = queue.current;
+    if (!account || !loader) throw Error("Workspace is not ready.");
+    await loader.request();
+    if (identity.current !== account || queue.current !== loader) throw Error("Your account changed.");
+    if (loadError.current) throw Error(loadError.current);
+  }, []);
   const sync = useCallback(() => queue.current?.request(false) ?? Promise.resolve(), []);
   useEffect(() => {
     const id = user?.id;
@@ -69,11 +78,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
             perspectiveChosen.current = true;
           }
           setData(next);
+          loadError.current = "";
           setLoaded(true);
           setError("");
         }
       } catch (e) {
-        if (current()) setError(errorMessage(e));
+        if (current()) { loadError.current = errorMessage(e); setError(loadError.current); }
       } finally {
         if (current()) setLoading(false);
       }
@@ -204,6 +214,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         perspective,
         setPerspective,
         refresh,
+        refreshChecked,
         sync,
         notice,
         signOut,

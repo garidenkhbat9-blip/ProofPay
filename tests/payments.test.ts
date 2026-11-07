@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { paymentConfig, PAYPAL_BASE } from "../src/lib/payments/config";
+import { paymentConfig, PAYPAL_BASE, assertConfiguredFreelancer } from "../src/lib/payments/config";
 import { PaymentError, databasePaymentError, providerError } from "../src/lib/payments/errors";
 import { invoiceBody, verifyInvoice, checkoutUrl, type Payment, type PayPalInvoice } from "../src/lib/payments/model";
 import { PayPalGateway } from "../src/lib/payments/gateway";
@@ -164,6 +164,16 @@ function workflowFixture() {
   return { p, store, gateway, calls, setInvoice: (i: PayPalInvoice) => { current = i; } };
 }
 const sendOptions = { createAndSend: true, title: "Work", source: "api" as const };
+test("only the configured freelancer can start the merchant invoice path", () => {
+  assert.doesNotThrow(()=>assertConfiguredFreelancer(config, config.freelancerId));
+  for (const userId of ["client", "outsider", "another-freelancer", ""]) assert.throws(()=>assertConfiguredFreelancer(config, userId), code("PAYMENT_MERCHANT_NOT_CONFIGURED"));
+});
+test("stale payment eligibility rejected at claim cannot create or send a provider invoice", async () => {
+  const f = workflowFixture();
+  f.store.claim = async () => {throw new PaymentError("PAYMENT_APPROVAL_REQUIRED", "Stale agreement", "claim", "Review current terms", 409);};
+  await assert.rejects(runPayment(f.store, f.gateway, f.p, sendOptions), code("PAYMENT_APPROVAL_REQUIRED"));
+  assert.equal(f.calls.create, 0); assert.equal(f.calls.send, 0); assert.equal(f.calls.finish, 0);
+});
 test("refresh of an unstarted payment cannot create or send an invoice", async () => {
   const f = workflowFixture();
   await assert.rejects(runPayment(f.store, f.gateway, f.p, { ...sendOptions, createAndSend: false, source: "reconcile" }), code("PAYPAL_PAYMENT_NOT_CONFIRMED"));

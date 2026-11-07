@@ -5,6 +5,11 @@ export interface PayPalConfig {
   merchantId: string; merchantEmail: string; freelancerId: string;
 }
 export const PAYPAL_BASE = "https://api-m.sandbox.paypal.com";
+export function assertConfiguredFreelancer(config: PayPalConfig, userId: string) {
+  if (userId !== config.freelancerId) throw new PaymentError("PAYMENT_MERCHANT_NOT_CONFIGURED",
+    "This account is not the configured Sandbox merchant freelancer.", "validate_merchant",
+    "Use the existing authorized merchant account. This deployment does not support arbitrary-freelancer payments.", 403);
+}
 export function paymentConfig(env: Record<string, string | undefined>): PayPalConfig {
   if (env.PAYPAL_ENV !== "sandbox") throw new PaymentError("PAYPAL_CONFIG_MISSING",
     "Sandbox payments are not enabled.", "configuration", "Set PAYPAL_ENV=sandbox on the server. Live payments are disabled.", 503, false,

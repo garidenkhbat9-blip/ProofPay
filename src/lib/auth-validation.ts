@@ -33,7 +33,7 @@ export function authErrorMessage(error: unknown): string {
       return "The email or password is incorrect. Try again or reset your password.";
     case "email_exists":
     case "user_already_exists":
-      return "An account with this email already exists. Sign in or reset your password.";
+      return "If you already registered, sign in or reset your password. Otherwise check your confirmation email.";
     case "email_address_invalid":
     case "email_address_not_authorized":
       return "This email address cannot be used. Check it and try again.";
@@ -48,14 +48,15 @@ export function authErrorMessage(error: unknown): string {
     case "same_password":
       return "Choose a password different from your current password.";
     case "over_request_rate_limit":
+      return "Too many authentication attempts. Wait for the cooldown before trying again.";
     case "over_email_send_rate_limit":
-      return "Too many attempts. Wait a few minutes, then try again.";
+      return "Too many verification emails requested. Wait before requesting another email, or sign in if already confirmed.";
     case "signup_disabled":
       return "Account creation is currently unavailable. Please try again later.";
     case "session_not_found":
     case "session_expired":
     case "otp_expired":
-      return "This reset link has expired. Request a new link and try again.";
+      return "This verification or reset link is invalid, expired or already used. Sign in if already confirmed, or request a new link.";
   }
   if (detail.status === 429)
     return "Too many attempts. Wait a few minutes, then try again.";

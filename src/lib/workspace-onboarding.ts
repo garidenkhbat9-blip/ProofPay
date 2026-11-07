@@ -2,6 +2,7 @@ import type { User } from "@supabase/supabase-js";
 import type { CloudData, Profile, Role } from "./types";
 import { invitationStatus, memberRole } from "./domain";
 import { projectNextStep } from "./project-workflow";
+import { workspaceProjects } from "./project-management";
 
 type WorkspaceUser = Pick<User, "id" | "email" | "user_metadata">;
 
@@ -11,8 +12,7 @@ export function workspaceIdentity(user: WorkspaceUser | null, profiles: Profile[
   return {
     displayName: name || "Your account",
     initials: name ? name.split(" ").slice(0, 2).map((part) => Array.from(part)[0]).join("").toUpperCase() : "PP",
-    // Neither account age, last sign-in nor project count proves a first workspace visit.
-    // No persisted first-visit signal exists, so this greeting is deliberately neutral.
+    // The greeting stays neutral; the separate guided tour owns first-visit state.
     greeting: "Welcome to ProofPay",
   };
 }
@@ -47,11 +47,11 @@ export const onboarding = {
 } as const;
 
 export function dashboardGuidance(data: CloudData, user: WorkspaceUser | null, perspective: Role) {
-  const projects = data.projects.filter((p) => memberRole(data, p.id, user?.id) === perspective);
+  const projects = workspaceProjects(data, user?.id, perspective);
   const actions = projects.flatMap((project) => {
     const step = projectNextStep(data, project, user?.id);
     return step && project.status !== "archived" ? [{ project, step }] : [];
-  }).sort((a, b) => Number(b.step.attention) - Number(a.step.attention));
+  }).sort((a, b) => (b.step.priority || 0) - (a.step.priority || 0));
   const email = user?.email?.trim().toLowerCase();
   const pendingInvitation = !data.invitationError && !!email && data.invitations.some((i) => i.invited_email.toLowerCase() === email && invitationStatus(i) === "pending");
   const otherPerspective: Role = perspective === "client" ? "freelancer" : "client";

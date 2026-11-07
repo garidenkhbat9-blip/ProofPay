@@ -1,4 +1,4 @@
--- Run only on a DISPOSABLE/local Supabase database after migrations 001-004.
+-- Run only on a DISPOSABLE/local Supabase database after migrations 001-005.
 -- psql -v ON_ERROR_STOP=1 "$TEST_DATABASE_URL" -f tests/payments-authorization.sql
 -- All test rows are rolled back. Never point this at the production database.
 begin;
@@ -46,6 +46,60 @@ begin
    update public.payments set amount=1 where id=result.id;
    raise exception 'FAIL: financial snapshot was mutable';
  exception when raise_exception then if sqlerrm<>'PAYMENT_SNAPSHOT_IMMUTABLE' then raise; end if; end;
+ -- Simulate changes between prepare and claim. Each expected-error subtransaction
+ -- automatically restores its fixture mutation. No stored financial history is rewritten.
+ begin
+   delete from public.agreement_approvals where agreement_id=a and user_id=c;
+   perform public.claim_paypal_payment(result.id,lease,true);
+   raise exception 'FAIL: missing client acceptance allowed a claim';
+ exception when raise_exception then if sqlerrm<>'PAYMENT_APPROVAL_REQUIRED' then raise; end if; end;
+ begin
+   delete from public.project_members where project_id=p and user_id=f;
+   perform public.claim_paypal_payment(result.id,lease,true);
+   raise exception 'FAIL: missing freelancer membership allowed a claim';
+ exception when raise_exception then if sqlerrm<>'PAYMENT_APPROVAL_REQUIRED' then raise; end if; end;
+ begin
+   delete from public.project_members where project_id=p and user_id=c;
+   perform public.claim_paypal_payment(result.id,lease,true);
+   raise exception 'FAIL: missing payer membership allowed a claim';
+ exception when raise_exception then if sqlerrm<>'PAYMENT_APPROVAL_REQUIRED' then raise; end if; end;
+ begin
+   insert into public.evidence_submissions(project_id,milestone_id,link_id,submitted_by,revision,status)
+   values(p,m,l,f,2,'submitted');
+   perform public.claim_paypal_payment(result.id,lease,true);
+   raise exception 'FAIL: newer unapproved evidence allowed a claim';
+ exception when raise_exception then if sqlerrm<>'PAYMENT_APPROVAL_REQUIRED' then raise; end if; end;
+ begin
+   delete from public.submission_reviews where submission_id=s;
+   perform public.claim_paypal_payment(result.id,lease,true);
+   raise exception 'FAIL: missing human approval allowed a claim';
+ exception when raise_exception then if sqlerrm<>'PAYMENT_APPROVAL_REQUIRED' then raise; end if; end;
+ begin
+   update public.paypal_merchant_bindings set credential_fingerprint=repeat('b',64) where freelancer_id=f;
+   perform public.claim_paypal_payment(result.id,lease,true);
+   raise exception 'FAIL: changed credentials allowed a claim';
+ exception when raise_exception then if sqlerrm<>'PAYMENT_MERCHANT_NOT_CONFIGURED' then raise; end if; end;
+ if exists(select 1 from public.payments where id=result.id and (create_attempted_at is not null or lease_token is not null)) then
+   raise exception 'FAIL: rejected eligibility consumed a creation attempt'; end if;
+ update public.projects set status='archived' where id=p;
+ begin
+   perform public.claim_paypal_payment(result.id,lease,true);
+   raise exception 'FAIL: stale archived project acquired a creation lease';
+ exception when raise_exception then if sqlerrm<>'PAYMENT_APPROVAL_REQUIRED' then raise; end if; end;
+ update public.projects set status='active' where id=p;
+ insert into public.agreements(project_id,version,scope,created_by) values(p,2,'Superseding terms',c);
+ begin
+   perform public.claim_paypal_payment(result.id,lease,true);
+   raise exception 'FAIL: superseded agreement acquired a creation lease';
+ exception when raise_exception then if sqlerrm<>'PAYMENT_APPROVAL_REQUIRED' then raise; end if; end;
+ -- Fixture cleanup only, inside this disposable transaction.
+ delete from public.agreements where project_id=p and version=2;
+ update public.paypal_merchant_bindings set active=false where freelancer_id=f;
+ begin
+   perform public.claim_paypal_payment(result.id,lease,true);
+   raise exception 'FAIL: revoked merchant acquired a creation lease';
+ exception when raise_exception then if sqlerrm<>'PAYMENT_MERCHANT_NOT_CONFIGURED' then raise; end if; end;
+ update public.paypal_merchant_bindings set active=true where freelancer_id=f;
  claimed:=public.claim_paypal_payment(result.id,lease,true);
  if not (claimed->>'may_create')::boolean then raise exception 'FAIL: first attempt not claimed'; end if;
  begin
@@ -55,18 +109,28 @@ begin
  perform public.fail_paypal_payment(result.id,lease,'{"code":"PAYPAL_TIMEOUT"}'::jsonb);
  claimed:=public.claim_paypal_payment(result.id,gen_random_uuid(),true);
  if (claimed->>'may_create')::boolean then raise exception 'FAIL: ambiguous create could run twice'; end if;
+ perform public.fail_paypal_payment(result.id,(claimed->'payment'->>'lease_token')::uuid,'{"code":"PAYPAL_TIMEOUT"}'::jsonb);
+ update public.projects set status='archived' where id=p;
+ update public.paypal_merchant_bindings set active=false where freelancer_id=f;
+ claimed:=public.claim_paypal_payment(result.id,lease,false);
+ if (claimed->>'may_create')::boolean then raise exception 'FAIL: historical refresh can create an invoice'; end if;
+ perform public.fail_paypal_payment(result.id,lease,'{"code":"PAYPAL_TIMEOUT"}'::jsonb);
  if has_function_privilege('authenticated','public.prepare_paypal_payment(uuid,uuid,uuid,text,text)','EXECUTE') or
  has_function_privilege('anon','public.claim_paypal_payment(uuid,uuid,boolean)','EXECUTE') or
  has_function_privilege('authenticated','public.finish_paypal_payment(uuid,uuid,text,text,text,jsonb,text)','EXECUTE') then raise exception 'FAIL: browser can mutate financial state'; end if;
  perform set_config('proofpay.test.client',c::text,true);
  perform set_config('proofpay.test.outsider',outsider::text,true);
  perform set_config('proofpay.test.payment',result.id::text,true);
- raise notice 'PASS: approval, merchant, snapshot, duplicate prepare, concurrent lease and mutation grants';
+ raise notice 'PASS: eligibility, snapshot, duplicate prepare, busy lease, historical refresh and mutation grants';
 end; $$;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub',current_setting('proofpay.test.outsider'),true);
 do $$ begin
+ begin
+   perform public.claim_paypal_payment(current_setting('proofpay.test.payment')::uuid,gen_random_uuid(),true);
+   raise exception 'FAIL: authenticated can call service-only claim';
+ exception when insufficient_privilege then null; end;
  if exists(select id from public.payments where id=current_setting('proofpay.test.payment')::uuid) then raise exception 'FAIL: outsider can read invoice'; end if;
  begin
    perform payer_email from public.payments;
@@ -82,5 +146,16 @@ do $$ begin
  if not exists(select id from public.payments where id=current_setting('proofpay.test.payment')::uuid) then raise exception 'FAIL: client cannot read own invoice'; end if;
  raise notice 'PASS: member/outsider RLS, private columns and no browser payment updates';
 end; $$;
+reset role;
+set local role anon;
+do $$ begin
+ begin
+   perform public.claim_paypal_payment(current_setting('proofpay.test.payment')::uuid,gen_random_uuid(),true);
+   raise exception 'FAIL: anonymous can call service-only claim';
+ exception when insufficient_privilege then null; end;
+end; $$;
+reset role;
+set local role service_role;
+select public.claim_paypal_payment(current_setting('proofpay.test.payment')::uuid,gen_random_uuid(),false);
 reset role;
 rollback;

@@ -1,0 +1,151 @@
+/* ProofPay workspace tokens. Public pages retain the existing brand styling. */
+.workflow-empty { display: flex; align-items: flex-start; gap: 16px; padding: 24px; margin: 16px 0; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+.workflow-empty-icon { display: grid; place-items: center; flex: 0 0 38px; height: 38px; border-radius: 10px; background: var(--sage); color: var(--accent); }
+.main .workflow-empty h2 { font-size: 18px; line-height: 1.4; margin: 0 0 8px; }
+.workflow-empty p { max-width: 680px; color: var(--muted); font-size: 14px; line-height: 1.7; margin: 0; }
+.workflow-empty .actions { margin-top: 16px; }
+.project-progress li small { display: block; font-size: 10px; margin-top: 4px; font-weight: 500; }
+.project-progress li.blocked > span { border-style: dashed; }
+.main :is(.project-next-body, .dashboard-next) .workflow-actor { color: var(--accent); font-weight: 650; font-size: 12px; }
+.main :is(.project-next-body, .dashboard-next) .workflow-blocker { font-size: 12px; margin-bottom: 0; }
+.dashboard-other-actions { margin: 4px 0 20px; }
+.dashboard-other-actions summary { cursor: pointer; padding: 12px 0; color: var(--accent); font-weight: 600; }
+@media (max-width: 420px) { .workflow-empty { padding: 18px; gap: 12px; } .workflow-empty .actions { flex-wrap: wrap; } }
+.main, .sidebar, .guided-tour {
+  --ink: #172d25;
+  --muted: #53655b;
+  --line: #cdd8d0;
+  --soft: #f2f5f1;
+  --paper: #ffffff;
+  --sage: #e8f0e9;
+  --accent: #123d32;
+  --success: #24613e;
+  --warning: #795219;
+  --danger: #9d3734;
+}
+.main { background: var(--soft); min-height: 100dvh; }
+.sidebar { background: #fbfcfa; }
+.sidebar .nav { color: var(--muted); font-weight: 550; }
+.sidebar .nav:hover { background: var(--sage); color: var(--accent); }
+.sidebar .nav.active { background: var(--sage); color: var(--accent); font-weight: 700; box-shadow: inset 3px 0 var(--accent); }
+.main .topbar { background: var(--paper); border-bottom-color: var(--line); }
+.main .content { padding-bottom: 24px; }
+.main h1 { font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
+.main h2, .main h3 { color: var(--ink); font-weight: 650; }
+.main .subtitle, .main .card p, .main .subtle, .main .fieldhelp { color: var(--muted); line-height: 1.7; }
+.main .card, .main .dash-section, .main .delivery-panel, .main .dash-aside-card { border: 1px solid var(--line); background: var(--paper); border-radius: 12px; box-shadow: none; }
+.main .card { padding: clamp(20px, 2.5vw, 30px); }
+.main .card + .card { margin-top: 20px; }
+.main .field { border-color: #a4b5a9; color: var(--ink); background: var(--paper); }
+.main .field::placeholder { color: #64756b; opacity: 1; }
+.main .formlabel { font-weight: 650; color: var(--ink); }
+.main :is(button, .buttonlike):not(.ghost) { min-height: 44px; }
+.main :is(button, .buttonlike):hover { border-color: #859f8e; }
+.main button:disabled { opacity: .65; }
+.main :is(a, button, input, select, textarea):focus-visible, .guided-tour button:focus-visible { outline: 3px solid #27734f; outline-offset: 3px; }
+.main .notice { border: 1px solid #c9b98d; border-left: 3px solid var(--warning); background: #faf6ea; color: #594416; line-height: 1.7; }
+.main .formerror { background: #fff0ee; color: var(--danger); padding: 12px 14px; border-radius: 8px; }
+.main .empty { padding: 36px 24px; color: var(--muted); }
+.main .empty h2 { font-size: 19px; margin: 0 0 8px; }
+.main .empty p { max-width: 480px; margin: 0 auto; }
+.dashboard-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 20px; }
+.dashboard-tools { flex-shrink: 0; }
+.dashboard-toolbar .dash-welcome { margin: 0; }
+.main .dashboard-next { background: var(--sage); border-color: #b7cebd; border-left: 4px solid var(--accent); }
+.main .dashboard-next p { color: var(--muted); font-size: 14px; }
+.main .dashboard-next .dashboard-next-project { color: var(--accent); font-weight: 650; }
+.main .dash-stats { gap: 16px; }
+.main .dash-stat { background: var(--paper); border-color: var(--line); padding: 22px; }
+.main .dash-stat-label { font-size: 13px; font-weight: 600; color: var(--muted); }
+.main .dash-stat-value { font-size: clamp(24px, 2.5vw, 34px); color: var(--ink); font-weight: 700; letter-spacing: -.8px; }
+.main .dash-stat-foot { color: var(--muted); font-size: 12px; }
+.main .dash-section { overflow: visible; }
+.main .dash-section-head { background: #f8faf7; border-radius: 12px 12px 0 0; }
+.main .dash-section-head h2 { font-size: 16px; }
+.main .dash-aside-card h3 { font-size: 16px; }
+.main .dash-tip { background: var(--sage); color: var(--accent); }
+.project-filters { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(140px, .45fr) minmax(140px, .45fr); gap: 12px; }
+.project-result-count { color: var(--muted); margin: 14px 0; font-size: 13px; }
+.managed-project-list { display: grid; gap: 14px; }
+.managed-project { position: relative; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); min-width: 0; }
+.managed-project-main { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 24px; padding: 22px 64px 20px 24px; border-radius: inherit; }
+.managed-project-main:hover { background: #f7faf6; }
+.managed-project-title h3 { margin: 0 0 6px; font-size: 17px; overflow-wrap: anywhere; }
+.managed-project-title p { margin: 0; color: var(--muted); font-size: 12px; }
+.managed-project-budget { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+.managed-project-budget small { font-size: 11px; color: var(--muted); }
+.managed-project-budget strong { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.managed-project-state { grid-column: 1 / -1; }
+.managed-project-team { grid-column: 1 / -1; margin: 0; display: flex; flex-wrap: wrap; gap: 12px 28px; }
+.managed-project-team > div { display: flex; flex-wrap: wrap; gap: 5px 8px; font-size: 12px; }
+.managed-project-team dt { color: var(--muted); }
+.managed-project-team dd { margin: 0; color: var(--ink); font-weight: 600; overflow-wrap: anywhere; }
+.invitation-state { text-transform: capitalize; }
+.managed-project-next { grid-column: 1 / -1; padding-top: 12px; margin: 0; border-top: 1px solid var(--line); color: var(--accent); font-size: 13px; line-height: 1.7; }
+.managed-project-next > span:first-child { font-weight: 700; margin-right: 6px; }
+.dash-section .managed-project-list { gap: 0; }
+.dash-section .managed-project { border: 0; border-radius: 0; border-top: 1px solid var(--line); }
+.dash-section .managed-project:first-child { border-top: 0; }
+.dash-section .managed-project:last-child { border-radius: 0 0 12px 12px; }
+.project-actions { position: relative; flex-shrink: 0; }
+.managed-project > .project-actions { position: absolute; right: 12px; top: 16px; }
+.project-action-trigger { min-width: 40px; min-height: 44px; padding: 6px; letter-spacing: 2px; }
+.project-action-menu { position: absolute; z-index: 60; right: 0; top: calc(100% + 6px); width: 190px; padding: 6px; background: white; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 6px 20px #172d2514; }
+.project-action-menu a, .project-action-menu button { display: flex; justify-content: flex-start; text-align: left; padding: 12px; width: 100%; min-height: 44px; border: 0; border-radius: 6px; font-size: 13px; font-weight: 550; }
+.project-action-menu a:hover, .project-action-menu button:hover { background: var(--sage); }
+.main .delivery-pill { padding: 5px 10px; border: 1px solid #c8d5ca; background: #f0f4ef; color: #36513f; font-size: 12px; font-weight: 600; }
+.main .delivery-pill.pending, .main .delivery-pill.submitted { color: #75501b; border-color: #dccb9a; background: #faf4e4; }
+.main .delivery-pill.approved { color: #24593c; border-color: #b6d0bd; background: #eaf3ed; }
+.main .delivery-pill.revoked, .main .delivery-pill.expired, .main .delivery-pill.archived { color: #5e6260; border-color: #ced3d0; background: #f0f1ef; }
+.main .delivery-pill.changes { color: #903b31; border-color: #e1beb7; background: #fff1eb; }
+.main .projecttabs { border-bottom: 1px solid var(--line); gap: 8px; margin-bottom: 26px; }
+.main .projecttabs a { min-height: 44px; padding: 12px 18px; font-weight: 600; color: var(--muted); }
+.main .projecttabs a.selected { color: var(--accent); background: var(--sage); border-bottom: 3px solid var(--accent); border-radius: 7px 7px 0 0; }
+.main .project-next-action { background: var(--paper); border-color: #b7cebd; }
+.main .project-progress { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; padding: 20px 24px; background: #f4f8f2; overflow: visible; }
+.main .project-progress li { flex-direction: column; align-items: flex-start; gap: 8px; font-size: 12px; color: var(--muted); }
+.main .project-progress li > span { width: 28px; height: 28px; font-size: 12px; background: white; border-color: #a7b9ac; }
+.main .project-progress li[aria-current="step"] { color: var(--accent); font-weight: 750; }
+.main .project-progress li[aria-current="step"] > span { background: var(--accent); color: white; border-color: var(--accent); }
+.main .project-progress li.complete > span { color: var(--accent); background: #dcebdd; border-color: #a9c3b0; }
+.main .project-next-body { padding: 24px; }
+.main .project-next-body h2 { font-size: 22px; }
+.main .project-next-body p { color: var(--muted); font-size: 14px; }
+.main .project-next-body .project-next-status { color: var(--accent); font-size: 12px; font-weight: 650; }
+.main .details { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; padding: 20px; background: #f4f7f2; border: 1px solid var(--line); border-radius: 10px; }
+.main .details > div { min-width: 0; }
+.main .details dt { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+.main .details dd { color: var(--ink); font-size: 15px; font-weight: 650; margin: 0; overflow-wrap: anywhere; }
+#project-team, [data-tour] { scroll-margin-top: 90px; }
+.guided-tour { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--ink); box-shadow: none; overflow: hidden; }
+.guided-tour::backdrop { background: transparent; backdrop-filter: none; }
+.tour-shade { position: absolute; inset: 0; pointer-events: auto; }
+.tour-popover { position: absolute; width: min(360px, calc(100% - 24px)); max-height: calc(100% - 24px); overflow-y: auto; padding: 22px; border: 1px solid #b7cebd; background: white; border-radius: 14px; box-shadow: 0 10px 36px #0c241a24; }
+.tour-meta { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 11px; font-weight: 600; margin-bottom: 14px; }
+.tour-popover h2 { margin: 0 0 12px; font-size: 20px; line-height: 1.35; letter-spacing: -.4px; }
+.tour-popover h2:focus { outline: none; }
+.tour-popover p { color: var(--muted); font-size: 14px; line-height: 1.75; margin: 0 0 20px; }
+.tour-popover .tour-unavailable { font-size: 12px; background: var(--sage); padding: 10px; border-radius: 6px; }
+.tour-controls, .tour-controls > div { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.tour-controls button { min-height: 44px; }
+@media (max-width: 1050px) {
+  .managed-project-main { grid-template-columns: minmax(0, 1fr); }
+  .managed-project-budget { align-items: flex-start; }
+}
+@media (max-width: 720px) {
+  .dashboard-toolbar { align-items: flex-start; flex-wrap: wrap; }
+  .project-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .project-filters input { grid-column: 1 / -1; }
+  .main .details { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 16px; }
+  .main .project-progress { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 18px; }
+  .main .project-progress li { flex-direction: row; align-items: center; font-size: 11px; }
+  .main .project-next-body { flex-direction: column; align-items: flex-start; padding: 20px; gap: 16px; }
+  .main .project-next-body h2 { font-size: 20px; }
+  .managed-project-main { padding: 20px 60px 20px 20px; }
+  .main .projecttabs a { padding: 12px 14px; }
+}
+@media (max-width: 380px) {
+  .main .project-progress { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .main .details { grid-template-columns: 1fr; }
+  .tour-popover { padding: 18px; }
+}

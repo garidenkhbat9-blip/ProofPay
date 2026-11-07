@@ -5,10 +5,14 @@ import { useState, type FormEvent } from "react";
 import { createEvidenceFinalizer } from "@/lib/evidence-submit";
 import { useWorkspace } from "./provider";
 import { ProjectTabs } from "./projects";
+import { projectNextStep } from "@/lib/project-workflow";
+import { ProjectNextAction } from "./project-next-step";
+import { EvidenceAiReview } from "./evidence-ai-review";
 import {
   Heading,
   Badge,
   Empty,
+  EmptyState,
   Notice,
   Modal,
   FormMessage,
@@ -62,7 +66,9 @@ export function DeliveryPage({ id }: { id: string }) {
       </>
     );
   const a = latestAgreement(data, id),
-    ready = p.status !== "archived" && a && bothAccepted(data, a.id);
+    milestones = a ? agreementMilestones(data, a.id) : [],
+    ready = p.status !== "archived" && a && milestones.length > 0 && bothAccepted(data, a.id) && data.members.some(m => m.project_id === id && m.role === "freelancer"),
+    step = projectNextStep(data, p, user?.id);
   return (
     <>
       <ProjectTabs id={id} tab="delivery" />
@@ -70,14 +76,13 @@ export function DeliveryPage({ id }: { id: string }) {
         title={p.title}
         subtitle="A clear handoff. A recorded decision."
       />
-      {!ready && (
-        <Notice>
-          Both parties must accept the latest agreement before delivery.{" "}
-          <Link href={"/projects/" + id + "/agreement"}>Open agreement →</Link>
-        </Notice>
-      )}
-      <div className="delivery-list">
-        {(a ? agreementMilestones(data, a.id) : []).map((m, i) => {
+      {milestones.length > 0 && step && <ProjectNextAction step={step} />}
+      {!milestones.length && <EmptyState icon="folder" title={p.status === "archived" ? "Archived delivery records" : "Delivery has not started."}
+        description={step ? `${step.title} ${step.description}` : "Project records must be available before delivery can begin."}>
+        {step && <Link className="buttonlike forest" href={step.href}>{step.label} →</Link>}
+      </EmptyState>}
+      <div className={milestones.length ? "delivery-list" : undefined}>
+        {milestones.map((m, i) => {
           const last = revisions(data, m.id)[0],
             link = data.links.find(
               (l) => l.milestone_id === m.id && activeLink(data, l),
@@ -115,11 +120,6 @@ export function DeliveryPage({ id }: { id: string }) {
             </article>
           );
         })}
-        {!a && (
-          <div className="empty">
-            Add milestones to your agreement to begin.
-          </div>
-        )}
       </div>
       <p className="subtle sectionspace">
         Approval records acceptance. Payment is a separate step.
@@ -208,7 +208,7 @@ export function ReviewsPage() {
         title={perspective === "client" ? "Review inbox" : "My submissions"}
         subtitle="Evidence and decisions, in one place."
       />
-      <div className="delivery-list">
+      <div className={list.length ? "delivery-list" : undefined}>
         {list.map((s) => (
           <Link
             key={s.id}
@@ -228,7 +228,10 @@ export function ReviewsPage() {
             <span>View →</span>
           </Link>
         ))}
-        {!list.length && <div className="empty">No submissions yet.</div>}
+        {!list.length && <EmptyState icon="check" title={perspective === "client" ? "No work awaiting review." : "No submissions yet."}
+          description={perspective === "client" ? "Submitted work appears here after your freelancer delivers against an accepted agreement. Review the evidence before recording approval; approval does not make a payment." : "Submit work through your assigned delivery link after both parties accept the agreement. Each submitted revision and the client's decision appear here."}>
+          <Link className="buttonlike forest" href="/projects">{perspective === "client" ? "View projects" : "View my jobs"} →</Link>
+        </EmptyState>}
       </div>
     </>
   );
@@ -677,13 +680,14 @@ function EvidencePanel({
         className="verification-unavailable"
         aria-label="Verification status"
       >
-        <strong>CANNOT_VERIFY · Automated checks not connected</strong>
+        <strong>CANNOT_VERIFY · Website checks not connected</strong>
         <p>
-          No website or file-content checks have run for this revision. The
+          No automated website or functional checks have run for this revision. The
           client must inspect the submitted evidence against each requirement
           before making a decision.
         </p>
       </section>
+      {canReview && <EvidenceAiReview key={s.id} submission={s} criteria={criteria} />}
       {canReview && <ReviewForm submission={s} criteria={criteria} />}
     </article>
   );

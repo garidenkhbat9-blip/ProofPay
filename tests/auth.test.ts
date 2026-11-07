@@ -15,7 +15,7 @@ test("exploration requires an existing account to be acknowledged, never silentl
     assert.equal(needsAccountConfirmation(next, "account-a", true, null), false);
     assert.equal(needsAccountConfirmation(next, undefined, false, null), false);
   }
-  assert.equal(needsAccountConfirmation("/projects/p", "account-a", false, null), false);
+  assert.equal(needsAccountConfirmation("/projects/p", "account-a", false, null), true);
 });
 
 test("authentication retains role and project return paths while explicit intent takes priority", () => {
@@ -64,14 +64,14 @@ test("authentication failures give actionable feedback without exposing internal
     /email or password is incorrect/,
   );
   for (const code of ["email_exists", "user_already_exists"]) {
-    assert.match(authErrorMessage({ code }), /already exists/);
+    assert.match(authErrorMessage({ code }), /If you already registered/);
   }
   assert.match(
     authErrorMessage({ code: "email_not_confirmed" }),
     /Confirm your email/,
   );
   assert.match(authErrorMessage({ status: 429 }), /Wait a few minutes/);
-  assert.match(authErrorMessage({ code: "otp_expired" }), /Request a new link/);
+  assert.match(authErrorMessage({ code: "otp_expired" }), /request a new link/);
   assert.equal(
     authErrorMessage({
       code: "weak_password",
