@@ -9,6 +9,7 @@ import { getSupabase } from "@/lib/supabase";
 import { checkoutUrl, paymentLabels, type Payment, type PaymentStatus } from "@/lib/payments/model";
 import type { PaymentDiagnostic } from "@/lib/payments/errors";
 import { createRefreshQueue } from "@/lib/workspace-sync";
+import "@/app/demo-payment.css";
 
 type PublicPayment = Pick<Payment, "id" | "project_id" | "milestone_id" | "freelancer_id" | "payer_id" | "amount" | "currency" | "invoice_number" | "status" | "provider_status" | "checkout_url" | "create_retry_allowed" | "last_verified_at" | "paid_at" | "reconciliation_status" | "last_error" | "created_at">;
 interface PaymentList {
@@ -91,6 +92,7 @@ export function PaymentWorkspace() {
     <Heading title={perspective === "client" ? "Payments" : "Earnings"} subtitle="PayPal Sandbox · Test payments only">
       <button disabled={!!busy} onClick={() => void refresh()}>Refresh history</button>
     </Heading>
+    <section className="demo-payment-entry" aria-label="Payment experiences"><div><span>DEMO PAYMENT</span><strong>Practice with simulated money</strong><Link className="buttonlike" href="/payments/demo">Try Demo Payment →</Link></div><div><span>PAYPAL SANDBOX</span><strong>Test a real PayPal Sandbox integration</strong><p>Existing provider test accounts, invoices and verified records below.</p></div></section>
     <section className="overview"><div className="stat"><div className="statlabel">Active planned budget · excludes archived projects · not collected</div><div className="statvalue">{money(projectTotals(projects).plannedBudget)}</div></div></section>
     <Notice>The assigned freelancer invoices the project client using their verified Sandbox merchant account. Approval alone does not make a payment.</Notice>
     <PaymentProblem issue={loadIssue} /><PaymentProblem issue={result?.setupError || null} /><PaymentProblem issue={actionIssue} />

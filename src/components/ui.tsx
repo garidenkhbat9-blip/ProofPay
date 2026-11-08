@@ -33,15 +33,17 @@ export function Heading({
   title,
   subtitle,
   children,
+  level: Title = "h1",
 }: {
   title: string;
   subtitle?: string;
   children?: ReactNode;
+  level?: "h1" | "h2";
 }) {
   return (
     <div className="heading">
       <div>
-        <h1>{title}</h1>
+        <Title>{title}</Title>
         {subtitle && <p className="subtitle">{subtitle}</p>}
       </div>
       {children}

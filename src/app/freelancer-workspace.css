@@ -1,0 +1,466 @@
+/* Phase 2: Freelancer surfaces and Invitations only. Phase 1 tokens are inherited. */
+.freelancer-workspace {
+  max-width: 1220px;
+  margin: 0 auto;
+  color: var(--ink);
+}
+.freelancer-workspace .fw-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 25px 28px;
+  margin: 8px 0 22px;
+  background: #e8f0e9;
+  border: 1px solid #d1dfd2;
+  border-radius: 16px;
+}
+.freelancer-workspace .fw-eyebrow {
+  font-size: 11px;
+  color: #466653;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  font-weight: 750;
+}
+.freelancer-workspace .fw-header h1 {
+  font-size: clamp(26px, 2.6vw, 36px);
+  letter-spacing: -0.04em;
+  margin: 8px 0;
+}
+.freelancer-workspace .fw-header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.freelancer-workspace .fw-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  flex-shrink: 0;
+  border: 1px solid #b3cbb9;
+  border-radius: 50%;
+  color: #285d45;
+  background: #f4f8f1;
+}
+.freelancer-workspace .fw-brand-mark .icon {
+  width: 30px;
+  height: 30px;
+}
+.freelancer-workspace .fw-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0 0 24px;
+  gap: 1px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--line);
+}
+.freelancer-workspace .fw-summary > div {
+  display: grid;
+  gap: 5px;
+  padding: 16px 20px;
+  background: #fff;
+}
+.freelancer-workspace .fw-summary span {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.freelancer-workspace .fw-summary strong {
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
+}
+.freelancer-workspace .fw-summary small {
+  font-size: 11px;
+  color: var(--muted);
+}
+.freelancer-workspace .fw-focus {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 205px;
+  gap: 26px;
+  margin-bottom: 26px;
+  padding: 28px;
+  background: #fff;
+  border: 1px solid #d4ded5;
+  border-left: 4px solid #a48b4f;
+  border-radius: 14px;
+  box-shadow: 0 6px 22px #183e3008;
+}
+.freelancer-workspace .fw-focus h2 {
+  font-size: clamp(23px, 2.4vw, 30px);
+  letter-spacing: -0.035em;
+  line-height: 1.25;
+  margin: 12px 0;
+  overflow-wrap: anywhere;
+}
+.freelancer-workspace .fw-focus p {
+  font-size: 14px;
+  line-height: 1.65;
+  max-width: 620px;
+  color: var(--muted);
+  margin: 0;
+}
+.freelancer-workspace .fw-project-link {
+  display: block;
+  width: fit-content;
+  color: var(--accent);
+  font-size: 13px;
+  margin-top: 16px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+.freelancer-workspace .fw-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 22px;
+  border-radius: 9px;
+  background: #143f33;
+  color: #fff;
+  border-color: #143f33;
+}
+.freelancer-workspace .fw-primary:hover {
+  background: #205640;
+}
+.freelancer-workspace .fw-focus-aside {
+  background: #f5f5ec;
+  border: 1px solid #e7e2cd;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+.freelancer-workspace .fw-focus-aside .icon {
+  color: #7d642b;
+  width: 24px;
+  height: 24px;
+}
+.freelancer-workspace .fw-focus-aside strong {
+  font-size: 14px;
+  color: #514624;
+}
+.freelancer-workspace .fw-focus-aside span {
+  font-size: 12px;
+  color: #635b43;
+}
+.freelancer-workspace .fw-focus-aside small {
+  font-size: 11px;
+  color: var(--muted);
+}
+.freelancer-workspace .fw-jobs {
+  border: 1px solid #d8e1d9;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 4px 18px #173d3205;
+}
+.freelancer-workspace .fw-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 24px;
+}
+.freelancer-workspace .fw-section-head h2 {
+  font-size: 18px;
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+.freelancer-workspace .fw-section-head h2 span {
+  background: var(--sage);
+  color: var(--accent);
+  padding: 3px 7px;
+  border-radius: 6px;
+  margin-left: 5px;
+  font-size: 11px;
+  vertical-align: middle;
+}
+.freelancer-workspace .fw-job {
+  border-top: 1px solid #e4eae2;
+  padding: 20px 24px 12px;
+}
+.freelancer-workspace .fw-job:hover {
+  background: #fcfdf9;
+}
+.freelancer-workspace .fw-job-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+}
+.freelancer-workspace .fw-job-title h3 {
+  font-size: 15px;
+  margin: 0;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.freelancer-workspace .fw-job-title h3 a {
+  color: var(--ink);
+}
+.freelancer-workspace .fw-job-title p {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 5px 0 0;
+  overflow-wrap: anywhere;
+}
+.freelancer-workspace .fw-job-state {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+.freelancer-workspace .fw-job-state small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.freelancer-workspace .fw-status {
+  font-size: 11px;
+  font-weight: 650;
+  padding: 4px 8px;
+  border-radius: 5px;
+  line-height: 1.5;
+}
+.freelancer-workspace .fw-action {
+  background: #e7f0e7;
+  color: #25583d;
+}
+.freelancer-workspace .fw-waiting {
+  background: #faf2df;
+  color: #725320;
+}
+.freelancer-workspace .fw-paid {
+  background: #e6f3ea;
+  color: #1e5b3e;
+}
+.freelancer-workspace .fw-job-action {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 10px 0;
+}
+.freelancer-workspace a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.freelancer-workspace .fw-job-details {
+  margin-top: 10px;
+}
+.freelancer-workspace .fw-job-details summary {
+  width: fit-content;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--muted);
+  padding: 8px 0;
+}
+.freelancer-workspace .fw-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  background: #f6f8f3;
+  border-radius: 8px;
+  padding: 18px;
+  margin-top: 8px;
+}
+.freelancer-workspace .fw-detail-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.freelancer-workspace .fw-detail-grid strong {
+  font-size: 12px;
+}
+.freelancer-workspace .fw-detail-grid a {
+  font-size: 12px;
+  color: var(--accent);
+  text-decoration: underline;
+}
+.freelancer-workspace .fw-detail-grid small {
+  font-size: 11px;
+  color: var(--muted);
+}
+.freelancer-workspace .fw-feedback {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  margin: 0;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.freelancer-workspace .fw-empty {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 26px;
+  border-top: 1px solid var(--line);
+}
+.freelancer-workspace .fw-empty > .icon {
+  color: #3c6c50;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+}
+.freelancer-workspace .fw-empty h3 {
+  font-size: 17px;
+  margin: 0 0 7px;
+}
+.freelancer-workspace .fw-empty p {
+  font-size: 13px;
+  margin: 0;
+  color: var(--muted);
+}
+.freelancer-workspace .fw-all-jobs {
+  display: block;
+  border-top: 1px solid var(--line);
+  padding: 16px 24px;
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 650;
+}
+.freelancer-workspace .fw-filters {
+  display: flex;
+  gap: 12px;
+}
+.freelancer-workspace .fw-filters input {
+  flex: 1;
+  min-width: 0;
+}
+.freelancer-workspace .fw-filters select {
+  width: auto;
+}
+.freelancer-workspace .fw-result {
+  font-size: 12px;
+  color: var(--muted);
+}
+.invitation-workspace .invitation-panel {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  margin-top: 20px;
+  box-shadow: 0 4px 18px #173d3205;
+}
+.invitation-workspace .invitation-panel h2 {
+  font-size: 17px;
+  margin: 0 0 10px;
+}
+.invitation-workspace .invitationrow {
+  gap: 16px;
+  padding: 18px 0;
+}
+.invitation-workspace .invitationinfo {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.invitation-workspace .invitationinfo strong {
+  font-size: 15px;
+}
+.invitation-workspace .invitationinfo p,
+.invitation-workspace .invitationinfo small {
+  font-size: 12px;
+}
+.invitation-workspace .invitationactions {
+  flex-wrap: wrap;
+}
+.invitation-workspace .invitationactions button {
+  border-color: #245542;
+  color: #fff;
+  background: #245542;
+}
+.invitation-workspace > details {
+  margin-top: 18px;
+}
+.invitation-workspace > details > summary {
+  padding: 12px 0;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--accent);
+}
+.invitation-workspace .invitation-empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+@media (max-width: 1100px) {
+  .freelancer-workspace .fw-job-main {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+  }
+  .freelancer-workspace .fw-job-action {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+@media (max-width: 800px) {
+  .freelancer-workspace .fw-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .freelancer-workspace .fw-focus {
+    grid-template-columns: 1fr;
+  }
+  .freelancer-workspace .fw-focus-aside {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 14px;
+  }
+  .freelancer-workspace .fw-detail-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+@media (max-width: 480px) {
+  .freelancer-workspace .fw-header {
+    padding: 20px;
+  }
+  .freelancer-workspace .fw-brand-mark {
+    display: none;
+  }
+  .freelancer-workspace .fw-summary > div {
+    padding: 14px;
+  }
+  .freelancer-workspace .fw-focus {
+    padding: 22px 18px;
+  }
+  .freelancer-workspace .fw-primary {
+    width: 100%;
+    justify-content: space-between;
+    font-size: 12px;
+  }
+  .freelancer-workspace .fw-job {
+    padding: 18px 16px 10px;
+  }
+  .freelancer-workspace .fw-job-main {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .freelancer-workspace .fw-section-head {
+    padding: 18px 16px;
+  }
+  .freelancer-workspace .fw-filters {
+    flex-direction: column;
+  }
+  .invitation-workspace .invitation-panel {
+    padding: 18px;
+  }
+  .invitation-workspace .invitationrow {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .freelancer-workspace *,
+  .invitation-workspace * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

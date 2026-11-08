@@ -1,7 +1,11 @@
 "use client";
 import Link from "next/link";
+import { FreelancerOverview, MyJobsPage } from "./freelancer-workspace";
+import { ClientOverview } from "./client-overview";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent, type ReactNode } from "react";
+import { useInvitationNotifications } from "./invitation-notifications";
+import { receivedInvitations } from "@/lib/invitation-notifications";
 import { useWorkspace } from "./provider";
 import {
   Heading,
@@ -21,41 +25,15 @@ import {
   invitationStatus,
   latestAgreement,
   bothAccepted,
-  currentDeliveries,
 } from "@/lib/domain";
 import { getSupabase } from "@/lib/supabase";
 import { rpc } from "@/lib/cloud";
 import type { Project, Invitation } from "@/lib/types";
 import { projectNextStep } from "@/lib/project-workflow";
-import { ProjectNextAction } from "./project-next-step";
-import { dashboardGuidance, workspaceIdentity } from "@/lib/workspace-onboarding";
-import { WorkspaceOnboarding, WorkflowHelp } from "./workspace-onboarding";
-import { JudgeWorkspace } from "./judge-workspace";
-import { DashboardTour } from "./dashboard-tour";
+import { ProjectWorkspace } from "./project-workspace";
 import { ProjectActions } from "./project-actions";
-import { projectTeam, projectTotals, workspaceProjects } from "@/lib/project-management";
-export function ProjectTabs({
-  id,
-  tab,
-}: {
-  id: string;
-  tab: "overview" | "agreement" | "delivery";
-}) {
-  return (
-    <nav className="projecttabs" aria-label="Project sections">
-      {(["overview", "agreement", "delivery"] as const).map((t) => (
-        <Link
-          key={t}
-          href={"/projects/" + id + (t === "overview" ? "" : "/" + t)}
-          className={tab === t ? "selected" : ""}
-          aria-current={tab === t ? "page" : undefined}
-        >
-          {t[0].toUpperCase() + t.slice(1)}
-        </Link>
-      ))}
-    </nav>
-  );
-}
+import { projectTeam, workspaceProjects } from "@/lib/project-management";
+export { ProjectTabs } from "./project-navigation";
 function ProjectList({ projects }: { projects: Project[] }) {
   const { data, user } = useWorkspace();
   return projects.length ? (
@@ -88,6 +66,10 @@ function ProjectList({ projects }: { projects: Project[] }) {
   );
 }
 export function ProjectsPage() {
+  const { perspective } = useWorkspace();
+  return perspective === "freelancer" ? <MyJobsPage /> : <ClientProjectsPage />;
+}
+function ClientProjectsPage() {
   const { data, user, perspective } = useWorkspace();
   const [query, setQuery] = useState(""),
     [category, setCategory] = useState("all"),
@@ -142,203 +124,9 @@ export function ProjectsPage() {
   );
 }
 export function Dashboard({ projectIds = [] }: { projectIds?: string[] }) {
-  const { data, user, perspective, refresh, setPerspective } = useWorkspace();
-  const { projects, actions: nextActions, pendingInvitation: hasPending, otherPerspective, otherProjects } = dashboardGuidance(data, user, perspective);
-  const { greeting } = workspaceIdentity(user, data.profiles);
-  const progressUnavailable = !!(data.agreementError || data.deliveryError);
-  const current = currentDeliveries(
-    data,
-    projects.filter((p) => p.status !== "archived").map((p) => p.id),
-  );
-  const waiting = current.filter((s) => s.status === "submitted").length;
-  const approved = current.filter((s) => s.status === "approved").length;
-  const changesReq = current.filter((s) => s.status === "changes").length;
-  const totals = projectTotals(projects);
-  const hasProjects = projects.length > 0;
-  return (
-    <>
-      <div className="dashboard-toolbar" data-tour="overview">
-      {hasProjects ? <div className="dash-welcome">
-        <span className="judge-eyebrow">{perspective === "client" ? "CLIENT" : "FREELANCER"} WORKSPACE</span>
-        <h1>{greeting}</h1>
-        <p>
-          {perspective === "client"
-            ? "Your projects and the work ready for your review."
-            : "Your work, delivery updates and next steps."}
-        </p>
-      </div> : <span className="judge-eyebrow">{perspective === "client" ? "CLIENT" : "FREELANCER"} WORKSPACE</span>}
-      <div className="dashboard-tools">
-        {perspective === "client" && <Link className="buttonlike forest" href="/projects/new" data-tour="new-project"><Icon name="plus" /> New project</Link>}
-      </div>
-      </div>
-      <DashboardTour />
-      {data.invitationError && <Notice>Invitation status is unavailable. <button onClick={() => void refresh()}>Refresh workspace</button></Notice>}
-      {progressUnavailable && <Notice>Some agreement or delivery records could not be loaded. Progress is unavailable until these records are restored. <button onClick={() => void refresh()}>Refresh workspace</button></Notice>}
-      {!hasProjects && otherProjects.length > 0 && <Notice>You have {otherProjects.length} project{otherProjects.length === 1 ? "" : "s"} as a {otherPerspective === "client" ? "Client" : "Freelancer"} with this account. <button onClick={() => setPerspective(otherPerspective)}>View {otherPerspective === "client" ? "Client" : "Freelancer"} projects</button></Notice>}
-      {hasPending && hasProjects && (
-        <Link className="invitationnotice" href="/invitations">
-          You have a pending project invitation. Review invitation →
-        </Link>
-      )}
-      {!hasProjects ? (
-        <WorkspaceOnboarding perspective={perspective} pendingInvitation={hasPending} />
-      ) : (
-        <>
-          {nextActions[0] && <section className="dashboard-next" aria-labelledby="dashboard-next-title">
-            <div><span className="judge-eyebrow">{nextActions[0].step.attention ? "YOUR NEXT ACTION" : "CURRENT PROJECT STATUS"}</span>
-              <p className="dashboard-next-project">{nextActions[0].project.title}</p>
-              <h2 id="dashboard-next-title">{nextActions[0].step.title}</h2>
-              <p>{nextActions[0].step.description}</p>
-              <p className="workflow-actor">Next: {nextActions[0].step.actor}</p>
-              {nextActions[0].step.blocker && <p className="workflow-blocker">{nextActions[0].step.blocker}</p>}</div>
-            <Link className="buttonlike forest" href={nextActions[0].step.href}>{nextActions[0].step.label} <span aria-hidden="true">→</span></Link>
-          </section>}
-          <div className="dash-stats">
-            <div className="dash-stat">
-              <div className="dash-stat-label">
-                Active projects
-                <Icon name="folder" />
-              </div>
-              <div className="dash-stat-value">
-                {totals.active}
-              </div>
-              <div className="dash-stat-foot">
-                {totals.archived}{" "}
-                archived
-              </div>
-            </div>
-            <div className="dash-stat">
-              <div className="dash-stat-label">
-                {perspective === "client" ? "To review" : "Awaiting review"}
-                <Icon name="clock" />
-              </div>
-              <div className="dash-stat-value">{progressUnavailable ? "—" : waiting}</div>
-              <div className="dash-stat-foot">
-                {progressUnavailable ? "Status unavailable" : changesReq > 0
-                  ? changesReq + " changes requested"
-                  : "No changes requested"}
-              </div>
-            </div>
-            <div className="dash-stat">
-              <div className="dash-stat-label">
-                Approved
-                <Icon name="check" />
-              </div>
-              <div className="dash-stat-value">{progressUnavailable ? "—" : approved}</div>
-              <div className="dash-stat-foot">work accepted · not payment</div>
-            </div>
-            <div className="dash-stat">
-              <div className="dash-stat-label">
-                Active planned budget
-                <Icon name="wallet" />
-              </div>
-              <div className="dash-stat-value">{money(totals.plannedBudget)}</div>
-              <div className="dash-stat-foot">USD · excludes archived projects · not collected</div>
-            </div>
-          </div>
-          <div className="dash-grid">
-            <div>
-              {nextActions.length > 1 && (
-                <details className="dashboard-other-actions">
-                  <summary>Other project next steps <span>{nextActions.length - 1}</span></summary>
-                <div className="dash-section">
-                  <div className="dash-section-head">
-                    <h2>Project next steps</h2>
-                    <span>
-                      {nextActions.length - 1} remaining
-                    </span>
-                  </div>
-                  {nextActions.slice(1).map(({ project, step }) => (
-                    <Link
-                      className="dash-action"
-                      href={step.href}
-                      key={project.id}
-                    >
-                      <div
-                        className={`dash-action-icon ${step.attention ? "attention" : ""}`}
-                      >
-                        <Icon name={step.attention ? "clock" : "folder"} />
-                      </div>
-                      <div>
-                        <strong>{project.title}</strong>
-                        <p>{step.title}</p>
-                        <Badge>{step.status}</Badge>
-                      </div>
-                      <span>{step.label} →</span>
-                    </Link>
-                  ))}
-                </div>
-                </details>
-              )}
-              <div className="dash-section">
-                <div className="dash-section-head">
-                  <h2>
-                    {perspective === "client" ? "Your projects" : "My jobs"}
-                  </h2>
-                  <button className="ghost" onClick={() => void refresh()}>
-                    Refresh
-                  </button>
-                </div>
-                <ProjectList projects={projects} />
-              </div>
-            </div>
-            <aside>
-              <div className="dash-aside-card">
-                <h3>Delivery progress</h3>
-                {progressUnavailable ? <p>Delivery progress is unavailable. Refresh your workspace to try again.</p> : current.length ? (
-                  <>
-                    {(
-                      [
-                        ["approved", "Approved", approved],
-                        ["submitted", "In review", waiting],
-                        ["changes", "Changes requested", changesReq],
-                      ] as const
-                    ).map(([cls, label, count]) => (
-                      <div className="dash-delivery-bar" key={cls}>
-                        <div>
-                          <span>{label}</span>
-                          <strong>{count}</strong>
-                        </div>
-                        <div className="dash-bar-track">
-                          <span
-                            className={cls}
-                            style={{
-                              width:
-                                (current.length
-                                  ? (100 * count) / current.length
-                                  : 0) + "%",
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                ) : (
-                  <p
-                    style={{
-                      fontSize: 13,
-                      color: "var(--muted)",
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    Progress appears after the first submission.
-                  </p>
-                )}
-                <div className="dash-tip">
-                  <Icon name="shield" />
-                  Approval records acceptance. Payment is a separate step.
-                </div>
-              </div>
-            </aside>
-          </div>
-        </>
-      )}
-      <JudgeWorkspace projectIds={projectIds} />
-      <WorkflowHelp />
-    </>
-  );
+  const { perspective } = useWorkspace();
+  return perspective === "client" ? <ClientOverview projectIds={projectIds} /> : <FreelancerOverview projectIds={projectIds} />;
 }
-
 export function NewProject() {
   const { perspective, refresh, notice } = useWorkspace();
   const router = useRouter(),
@@ -440,67 +228,23 @@ export function NewProject() {
 export function ProjectOverview({ id }: { id: string }) {
   const { data, user } = useWorkspace();
   const [invite, setInvite] = useState(false);
-  const p = data.projects.find((p) => p.id === id);
-  if (!p || !memberRole(data, id, user?.id))
-    return <Empty>Project not found.</Empty>;
+  const p = data.projects.find(p => p.id === id);
   const role = memberRole(data, id, user?.id);
-  const next = projectNextStep(data, p, user?.id);
-  const person = (r: string) => {
-    const m = data.members.find((m) => m.project_id === id && m.role === r);
-    return m
-      ? data.profiles.find((p) => p.id === m.user_id)?.full_name ||
-          "Project member"
-      : "Not assigned";
-  };
-  return (
-    <>
-      <ProjectTabs id={id} tab="overview" />
-      <Heading title={p.title} subtitle={`${categories[p.work_category]} · ${p.due_date ? "Due " + p.due_date : "No due date"}`}><ProjectActions project={p} /></Heading>
-      {next && (
-        <ProjectNextAction step={next} onInvite={() => setInvite(true)} />
-      )}
-      <section className="card">
-        <h2>Project brief</h2>
-        <p className="preservelines">{p.description || "No project brief added yet."}</p>
-        <dl className="details sectionspace">
-          {[
-            ["Planned budget", money(p.budget_amount)],
-            ["Your role", role],
-            ["Client", person("client")],
-            ["Freelancer", person("freelancer")],
-            ["Project status", p.status],
-            ["Invitation", projectTeam(data, id).invitation],
-          ].map(([label, value]) => (
-            <div key={label}>
-              <dt>{label}</dt>
-              <dd>{value}</dd>
-            </div>
-          ))}
-        </dl>
-        <p className="fieldhelp">The planned budget is not a payment or funds held. Work approval and payment status are recorded separately.</p>
+  if (!p || !role) return <ProjectWorkspace id={id} />;
+  const hasFreelancer = data.members.some(m => m.project_id === id && m.role === "freelancer");
+  const invitations = data.invitations.filter(i => i.project_id === id);
+  const pending = invitations.filter(i => invitationStatus(i) === "pending");
+  const history = invitations.filter(i => invitationStatus(i) !== "pending");
+  return <>
+    <ProjectWorkspace id={id} onInvite={() => setInvite(true)} setup={
+      <section className="pw-team" id="project-team">
+        <h2>Team & invitation</h2>
+        {role === "client" ? data.invitationError ? <p>Invitation records unavailable.</p> : <>{pending.length > 0 && <InvitationList items={pending} incoming={false} showProject={false} />}{history.length > 0 && <details><summary>Previous invitations ({history.length})</summary><InvitationList items={history} incoming={false} showProject={false} /></details>}{!invitations.length && <p>No invitation sent.</p>}</> : <p>Your project membership is confirmed.</p>}
+        {role === "client" && !hasFreelancer && p.status !== "archived" && data.invitations.some(i => i.project_id === id && invitationStatus(i) === "pending") && <button onClick={() => setInvite(true)}>Manage invitation recipient</button>}
       </section>
-      <section className="card" id="project-team">
-        <div className="sectionhead">
-          <h2>Project team</h2>
-          {role === "client" &&
-            person("freelancer") === "Not assigned" &&
-            p.status !== "archived" && (
-              <button onClick={() => setInvite(true)}>
-                + Invite freelancer
-              </button>
-            )}
-        </div>
-        <p>Freelancer: {person("freelancer")}</p>
-        {role === "client" && (
-          <InvitationList
-            items={data.invitations.filter((i) => i.project_id === id)}
-            incoming={false}
-          />
-        )}
-      </section>
-      {invite && <InviteForm project={p} onClose={() => setInvite(false)} />}
-    </>
-  );
+    } />
+    {invite && <InviteForm project={p} onClose={() => setInvite(false)} />}
+  </>;
 }
 function InviteForm({
   project,
@@ -566,14 +310,19 @@ function InviteForm({
 function InvitationList({
   items,
   incoming,
+  showProject = true,
 }: {
   items: Invitation[];
   incoming: boolean;
+  showProject?: boolean;
 }) {
-  const { data, user, refresh, notice, setPerspective } = useWorkspace();
+  const { data, user, refresh, refreshChecked, notice, setPerspective } = useWorkspace();
+  const { items: actionable } = useInvitationNotifications();
   const router = useRouter(),
     task = useTask();
   const [selected, setSelected] = useState<Invitation | null>(null);
+  const currentSelection = selected && items.find(i => i.id === selected.id);
+  const canConfirm = !!currentSelection && (incoming ? actionable.some(i => i.id === currentSelection.id) : currentSelection.status === "pending");
   return (
     <>
       {items.length ? (
@@ -581,17 +330,18 @@ function InvitationList({
           const status = invitationStatus(i),
             own = memberRole(data, i.project_id, user?.id);
           const can = incoming
-            ? i.invited_email === user?.email?.trim().toLowerCase() &&
-              status === "pending"
+            ? actionable.some(item => item.id === i.id)
             : own === "client" && i.status === "pending";
           return (
             <article className="invitationrow" key={i.id}>
               <div className="invitationinfo">
                 <strong>{i.project_title}</strong>
-                <p>{i.invited_email}</p>
+                {!incoming && <p>{i.invited_email}</p>}
                 <small>
-                  Expires {new Date(i.expires_at).toLocaleDateString()}
+                  {status === "expired" ? "Expired" : "Expires"} {new Date(i.expires_at).toLocaleString()}
                 </small>
+                {status === "expired" && <p>This invitation has expired. Ask the client for a new invitation.</p>}
+                {status === "revoked" && <p>The client revoked this invitation. It can no longer be accepted.</p>}
               </div>
               <div className="invitationactions">
                 <Badge status={status === "accepted" ? "approved" : status}>
@@ -602,7 +352,7 @@ function InvitationList({
                     {incoming ? "Review invitation" : "Revoke"}
                   </button>
                 )}
-                {own && (
+                {own && showProject && (
                   <Link
                     className="buttonlike"
                     href={"/projects/" + i.project_id}
@@ -628,22 +378,39 @@ function InvitationList({
               ? "You will join as the freelancer. This does not approve an agreement or authorize a payment."
               : "The recipient will no longer be able to accept this invitation."}
           </p>
+          {!canConfirm && <Notice>This invitation is no longer actionable. It may have expired or been revoked. Close this review and check the updated list.</Notice>}
           <FormMessage error={task.error} />
           <div className="dialogfooter">
             <button onClick={() => setSelected(null)}>Cancel</button>
             <button
               className="primary"
-              disabled={task.busy}
+              disabled={task.busy || !canConfirm}
               onClick={() =>
                 void task.run(async () => {
+                  if (!canConfirm) return;
                   const projectId = await rpc(
                     getSupabase(),
                     incoming
                       ? "accept_project_invitation"
                       : "revoke_project_invitation",
                     { p_invitation_id: selected.id },
-                  );
-                  await refresh();
+                  ).catch(async (error: unknown) => {
+                    // A revoke/expiry may have raced the review. Reconcile the
+                    // visible list even when the server correctly rejects it.
+                    await refresh();
+                    throw error;
+                  });
+                  try {
+                    await refreshChecked();
+                  } catch {
+                    // The mutation was confirmed even if its follow-up read
+                    // failed. Do not suggest resubmitting the same decision.
+                    setSelected(null);
+                    notice(incoming
+                      ? "Invitation accepted. Refresh the workspace to update your invitations."
+                      : "Invitation revoked. Refresh the workspace to update your invitations.");
+                    return;
+                  }
                   setSelected(null);
                   if (incoming) {
                     setPerspective("freelancer");
@@ -666,36 +433,21 @@ function InvitationList({
   );
 }
 export function InvitationsPage() {
-  const { data, user, refresh } = useWorkspace();
-  return (
-    <>
-      <Heading title="Invitations">
-        <button onClick={() => void refresh()}>Refresh</button>
-      </Heading>
-      <p className="subtle">
-        Invitations match a verified email address. No email is sent.
-      </p>
-      {data.invitationError && <Notice>{data.invitationError}</Notice>}
-      <section className="card">
-        <h2>Received</h2>
-        <InvitationList
-          incoming
-          items={data.invitations.filter(
-            (i) => i.invited_email === user?.email?.toLowerCase(),
-          )}
-        />
-      </section>
-      <section className="card">
-        <h2>Created by you</h2>
-        <InvitationList
-          incoming={false}
-          items={data.invitations.filter(
-            (i) => memberRole(data, i.project_id, user?.id) === "client",
-          )}
-        />
-      </section>
-    </>
-  );
+  const { data, user, refresh, loading } = useWorkspace();
+  const { items, count } = useInvitationNotifications();
+  const received = receivedInvitations(data.invitations, user);
+  const history = received.filter(i => !items.some(p => p.id === i.id)).sort((a, b) => b.created_at.localeCompare(a.created_at));
+  const sent = data.invitations.filter(i => memberRole(data, i.project_id, user?.id) === "client");
+  return <div className="invitation-workspace">
+    <Heading title="Invitations" subtitle="Review the project before you join."><button disabled={loading} onClick={() => void refresh()}>{loading ? "Refreshing..." : "Refresh"}</button></Heading>
+    {data.invitationError ? <Notice>Invitations are unavailable. Refresh to try again.</Notice> : <>
+      <section className="invitation-panel" aria-labelledby="pending-invitations-title"><h2 id="pending-invitations-title">Pending invitations {count === null ? "" : `(${count})`}</h2>
+      {count === null ? <p role="status">Loading invitations...</p> : count ? <InvitationList incoming items={items} /> : <div className="invitation-empty"><Icon name="check" /><p>No pending invitations.</p></div>}</section>
+      {history.length > 0 && <details><summary>Invitation history ({history.length})</summary><section className="invitation-panel"><InvitationList incoming items={history} /></section></details>}
+      {sent.length > 0 && <details><summary>Sent invitations ({sent.length})</summary><section className="invitation-panel"><InvitationList incoming={false} items={sent} /></section></details>}
+    </>}
+    <details><summary>How invitations work</summary><p>Invitations are matched to your verified email. Joining does not accept an agreement or authorize payment. Updates appear in ProofPay; email and push delivery are not connected.</p></details>
+  </div>;
 }
 export function AgreementsList() {
   const { data, user, perspective } = useWorkspace();

@@ -1,4 +1,5 @@
 "use client";
+import { InvitationBadge } from "./invitation-notifications";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -25,6 +26,9 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
     params = useSearchParams(),
     router = useRouter();
   const requestedPerspective = entryPerspective(path + "?" + params.toString());
+  // Only the fictional local demo is independent of workspace database loading.
+  // Auth checks above the workspace render remain identical for every route.
+  const localPaymentDemo = path === "/payments/demo";
   useEffect(() => {
     if (!user || !requestedPerspective) return;
     setPerspective(requestedPerspective);
@@ -103,7 +107,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
       window.removeEventListener("online", check);
       document.removeEventListener("visibilitychange", check);
     };
-  }, [user?.id, sync]);
+  }, [user?.id, sync, path]);
   useEffect(() => {
     if (ready && !user && !authError) {
       const next = path + window.location.search;
@@ -188,6 +192,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           >
             <Icon name={icon} />
             {title}
+            {href === "/invitations" && <InvitationBadge />}
           </Link>
         ))}
         <div className="sidebottom">
@@ -243,7 +248,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
         </header>
         <div className="content" id="workspace-main" tabIndex={-1}>
           <p className="workspace-account">Signed in as {user.email || name} · <Link href="/settings">Account</Link></p>
-          {!loaded && loading && (
+          {!loaded && loading && !localPaymentDemo && (
             <div className="workspace-loading" role="status">
               <span>Loading your projects…</span>
               <div className="skeleton-grid" aria-hidden="true">
@@ -253,7 +258,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
               </div>
             </div>
           )}
-          {error && (
+          {error && !localPaymentDemo && (
             <Empty>
               <h2>
                 {loaded
@@ -264,7 +269,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
               <button onClick={() => void refresh()}>Retry</button>
             </Empty>
           )}
-          {loaded && <Fragment key={user.id}>{children}</Fragment>}
+          {(loaded || localPaymentDemo) && <Fragment key={user.id}>{children}</Fragment>}
           <footer className="footer">
             <Link href="/">ProofPay · Back to homepage ↗</Link>
           </footer>

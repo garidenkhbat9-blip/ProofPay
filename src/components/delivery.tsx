@@ -4,9 +4,9 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { createEvidenceFinalizer } from "@/lib/evidence-submit";
 import { useWorkspace } from "./provider";
-import { ProjectTabs } from "./projects";
+import { ProjectTabs, ProjectPhaseNavigation } from "./project-navigation";
+import { workspaceHref } from "@/lib/project-workspace";
 import { projectNextStep } from "@/lib/project-workflow";
-import { ProjectNextAction } from "./project-next-step";
 import { EvidenceAiReview } from "./evidence-ai-review";
 import {
   Heading,
@@ -52,7 +52,7 @@ function SetupNeeded({ error }: { error: string }) {
     </Empty>
   );
 }
-export function DeliveryPage({ id }: { id: string }) {
+export function DeliveryPage({ id, embedded = false }: { id: string; embedded?: boolean }) {
   const { data, user } = useWorkspace();
   const [create, setCreate] = useState<Milestone | null>(null);
   const p = data.projects.find((p) => p.id === id),
@@ -61,7 +61,7 @@ export function DeliveryPage({ id }: { id: string }) {
   if (data.deliveryError || data.agreementError)
     return (
       <>
-        <ProjectTabs id={id} tab="delivery" />
+        {!embedded && <ProjectTabs id={id} tab="delivery" />}
         <SetupNeeded error={data.deliveryError || data.agreementError} />
       </>
     );
@@ -71,12 +71,8 @@ export function DeliveryPage({ id }: { id: string }) {
     step = projectNextStep(data, p, user?.id);
   return (
     <>
-      <ProjectTabs id={id} tab="delivery" />
-      <Heading
-        title={p.title}
-        subtitle="A clear handoff. A recorded decision."
-      />
-      {milestones.length > 0 && step && <ProjectNextAction step={step} />}
+      {!embedded && <ProjectTabs id={id} tab="delivery" />}
+      {!embedded && <Heading title={p.title} subtitle="Delivery records" />}
       {!milestones.length && <EmptyState icon="folder" title={p.status === "archived" ? "Archived delivery records" : "Delivery has not started."}
         description={step ? `${step.title} ${step.description}` : "Project records must be available before delivery can begin."}>
         {step && <Link className="buttonlike forest" href={step.href}>{step.label} →</Link>}
@@ -103,7 +99,7 @@ export function DeliveryPage({ id }: { id: string }) {
               <Badge status={last?.status}>{deliveryStatus(last)}</Badge>
               <div className="actions">
                 {view && (
-                  <Link className="buttonlike" href={"/handoff/" + view.id}>
+                  <Link className="buttonlike" href={embedded ? workspaceHref(id, role === "client" && last?.status === "submitted" ? "review" : "deliver", view.id) : "/handoff/" + view.id}>
                     {role === "client" && last?.status === "submitted"
                       ? "Review work"
                       : "Open delivery"}{" "}
@@ -125,16 +121,18 @@ export function DeliveryPage({ id }: { id: string }) {
         Approval records acceptance. Payment is a separate step.
       </p>
       {create && (
-        <CreateLink milestone={create} onClose={() => setCreate(null)} />
+        <CreateLink milestone={create} workspaceId={embedded ? id : undefined} onClose={() => setCreate(null)} />
       )}
     </>
   );
 }
 function CreateLink({
+  workspaceId,
   milestone,
   onClose,
 }: {
   milestone: Milestone;
+  workspaceId?: string;
   onClose: () => void;
 }) {
   const { refresh } = useWorkspace(),
@@ -153,7 +151,7 @@ function CreateLink({
             });
             await refresh();
             onClose();
-            router.push("/handoff/" + id);
+            router.push(workspaceId ? workspaceHref(workspaceId, "deliver", id) : "/handoff/" + id);
           });
         }}
       >
@@ -236,7 +234,7 @@ export function ReviewsPage() {
     </>
   );
 }
-export function HandoffPage({ id }: { id: string }) {
+export function HandoffPage({ id, embedded = false }: { id: string; embedded?: boolean }) {
   const { data, user } = useWorkspace();
   if (data.deliveryError || data.agreementError)
     return <SetupNeeded error={data.deliveryError || data.agreementError} />;
@@ -266,6 +264,7 @@ export function HandoffPage({ id }: { id: string }) {
       link.freelancer_id === user?.id &&
       (!last || ["uploading", "changes"].includes(last.status)),
     review = data.reviews.find((r) => r.submission_id === last?.id);
+  const HandoffTitle = embedded ? "h2" : "h1";
   const name = (role: string) => {
     const member = data.members.find(
       (x) => x.project_id === p.id && x.role === role,
@@ -277,36 +276,20 @@ export function HandoffPage({ id }: { id: string }) {
   };
   return (
     <>
-      <Link className="backlink" href={"/projects/" + p.id + "/delivery"}>
-        ← {p.title}
-      </Link>
+      {!embedded && <><ProjectPhaseNavigation id={p.id} selected={role === "client" && last?.status === "submitted" ? "review" : "deliver"} /><Link className="backlink" href={workspaceHref(p.id, "deliver")}>Back to {p.title}</Link></>}
       <div className="delivery-heading">
         <div>
           <p className="eyebrow">WORK HANDOFF · V{a?.version}</p>
-          <h1>{m.title}</h1>
+          <HandoffTitle>{m.title}</HandoffTitle>
           <p className="subtitle">
             {name("client")} → {name("freelancer")}
           </p>
         </div>
         <Badge status={last?.status}>{deliveryStatus(last)}</Badge>
       </div>
-      <ol className="delivery-steps">
-        <li className="done">
-          <b>01</b>Agreement
-        </li>
-        <li className={last ? "done" : "current"}>
-          <b>02</b>Evidence
-        </li>
-        <li className={last?.status === "approved" ? "done" : "current"}>
-          <b>03</b>Client review
-        </li>
-        <li>
-          <b>04</b>Payment <small>PayPal Sandbox</small>
-        </li>
-      </ol>
-      <div className="handoff-grid">
+      <div className={role === "client" && history.some(s=>s.status !== "uploading") ? "handoff-grid ai-handoff" : "handoff-grid"}>
         <section>
-          <div className="delivery-panel">
+          {(role !== "client" || !history.some(s=>s.status !== "uploading")) && <div className="delivery-panel">
             <div className="sectionhead">
               <h2>What to deliver</h2>
               <span className="subtle">{criteria.length} requirements</span>
@@ -325,7 +308,8 @@ export function HandoffPage({ id }: { id: string }) {
                 <p>{link.instructions}</p>
               </div>
             )}
-          </div>
+          </div>}
+          {role === "client" && history.some(s=>s.status !== "uploading") && link.instructions && <details><summary>Submission instructions</summary><p>{link.instructions}</p></details>}
           {!current && (
             <Notice>
               This link has expired, was revoked, or belongs to an older
@@ -612,20 +596,10 @@ function EvidencePanel({
   criteria: Criterion[];
   canReview: boolean;
 }) {
-  const { data, notice } = useWorkspace();
+  const { data, notice, user } = useWorkspace();
   const artifacts = data.artifacts.filter((a) => a.submission_id === s.id),
     review = data.reviews.find((r) => r.submission_id === s.id);
-  return (
-    <article className="delivery-panel" id={"revision-" + s.revision}>
-      <div className="sectionhead">
-        <h2>Revision {s.revision}</h2>
-        <Badge status={s.status}>{deliveryStatus(s)}</Badge>
-      </div>
-      <p className="subtle">
-        Submitted {new Date(s.submitted_at || s.created_at).toLocaleString()} ·{" "}
-        {artifacts.length} evidence items received
-      </p>
-      {s.notes && <p className="delivery-text">{s.notes}</p>}
+  const evidence = <>      {s.notes && <p className="delivery-text">{s.notes}</p>}
       <div className="evidence-list">
         {artifacts.map((a) =>
           a.kind === "url" ? (
@@ -671,6 +645,24 @@ function EvidencePanel({
           ),
         )}
       </div>
+</>;
+  const milestone = data.milestones.find(m=>m.id===s.milestone_id);
+  const agreement = data.agreements.find(a=>a.id===milestone?.agreement_id);
+  if (memberRole(data, s.project_id, user?.id) === "client" && agreement) return <article id={"revision-"+s.revision}>
+    <EvidenceAiReview submission={s} criteria={criteria} artifacts={artifacts} agreementId={agreement.id} agreementVersion={agreement.version} canAnalyze={canReview} evidence={evidence}
+      decision={canReview ? <ReviewForm submission={s} criteria={criteria}/> : review ? <p><strong>Client decision: {review.decision === "approved" ? "Approved" : "Changes requested"}</strong><br/>{review.note}</p> : <p>Waiting for client decision. This revision is not currently reviewable.</p>} />
+  </article>;
+  return (
+    <article className="delivery-panel" id={"revision-" + s.revision}>
+      <div className="sectionhead">
+        <h2>Revision {s.revision}</h2>
+        <Badge status={s.status}>{deliveryStatus(s)}</Badge>
+      </div>
+      <p className="subtle">
+        Submitted {new Date(s.submitted_at || s.created_at).toLocaleString()} ·{" "}
+        {artifacts.length} evidence items received
+      </p>
+      {evidence}
       {review && (
         <p className="delivery-text">
           <strong>Client feedback:</strong> {review.note}
@@ -687,7 +679,6 @@ function EvidencePanel({
           before making a decision.
         </p>
       </section>
-      {canReview && <EvidenceAiReview key={s.id} submission={s} criteria={criteria} />}
       {canReview && <ReviewForm submission={s} criteria={criteria} />}
     </article>
   );
@@ -736,7 +727,7 @@ function ReviewForm({
   }
   return (
     <form onSubmit={submit}>
-      <h3 className="sectionspace">Review requirements</h3>
+      <h3 className="sectionspace">Your decision</h3>
       <p className="subtle">
         Inspect the evidence, then confirm each requirement you verified.
       </p>

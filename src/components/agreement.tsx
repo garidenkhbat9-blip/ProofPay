@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useWorkspace } from "./provider";
-import { ProjectTabs } from "./projects";
+import { ProjectTabs } from "./project-navigation";
 import { Heading, Badge, Empty, EmptyState, Modal, FormMessage, useTask, Notice } from "./ui";
 import { agreementGuidance } from "@/lib/agreement-guidance";
 import {
@@ -19,7 +19,7 @@ import { getSupabase } from "@/lib/supabase";
 import { rpc } from "@/lib/cloud";
 import type { Agreement, MilestoneDraft, Project } from "@/lib/types";
 import { AgreementDraftBuilder } from "./agreement-draft-builder";
-export function AgreementPage({ id }: { id: string }) {
+export function AgreementPage({ id, embedded = false }: { id: string; embedded?: boolean }) {
   const { data, user } = useWorkspace(),
     params = useSearchParams();
   const [editing, setEditing] = useState<{ base?: Agreement } | null>(null),
@@ -30,7 +30,7 @@ export function AgreementPage({ id }: { id: string }) {
   if (data.agreementError)
     return (
       <>
-        <ProjectTabs id={id} tab="agreement" />
+        {!embedded && <ProjectTabs id={id} tab="agreement" />}
         <Empty>
           <h2>Agreements unavailable</h2>
           <p>{data.agreementError}</p>
@@ -53,13 +53,13 @@ export function AgreementPage({ id }: { id: string }) {
   if (!a)
     return (
       <>
-        <ProjectTabs id={id} tab="agreement" />
-        <Heading title="Agreement" />
-        {!requested && !guidance.hasFreelancer && p.status !== "archived" && <EmptyState icon="user" title={guidance.teamTitle} description={guidance.teamDescription}>
+        {!embedded && <ProjectTabs id={id} tab="agreement" />}
+        {!embedded && <Heading title="Agreement" />}
+        {!embedded && !requested && !guidance.hasFreelancer && p.status !== "archived" && <EmptyState icon="user" title={guidance.teamTitle} description={guidance.teamDescription}>
           {guidance.canInvite && <Link className="buttonlike forest" href={guidance.teamHref}>{guidance.teamLabel} →</Link>}
         </EmptyState>}
         <EmptyState icon="report" title={requested ? "Agreement version not found." : "No agreement yet."}
-          description={requested ? "This version is not available to your account. Open the latest version to continue." : p.status === "archived" ? "This project is archived. Reopen an eligible draft from the project actions before adding an agreement." : role === "client"
+          description={embedded && !requested && p.status !== "archived" ? "Both participants must accept the same agreement version before delivery; acceptance never authorizes payment." : requested ? "This version is not available to your account. Open the latest version to continue." : p.status === "archived" ? "This project is archived. Reopen an eligible draft from the project actions before adding an agreement." : role === "client"
             ? "Define scope, deliverables, milestones, amounts and acceptance requirements. You can save a draft before a freelancer joins. Both parties must accept the final version before delivery. Creating or accepting an agreement does not trigger payment."
             : "The client prepares the scope, deliverables, milestones, amounts and acceptance requirements. You both review and accept the latest version before delivery. Acceptance does not trigger payment."}>
           {guidance.canDraft && !requested && <button className={guidance.hasFreelancer ? "primary" : ""} onClick={() => setEditing({})}>Create agreement draft</button>}
@@ -67,7 +67,7 @@ export function AgreementPage({ id }: { id: string }) {
           {requested && <Link href={"/projects/" + id + "/agreement"}>Open latest version</Link>}
         </EmptyState>
         {editing && (
-          <AgreementEditor project={p} onClose={() => setEditing(null)} />
+          <AgreementEditor project={p} embedded={embedded} onClose={() => setEditing(null)} />
         )}
       </>
     );
@@ -79,13 +79,14 @@ export function AgreementPage({ id }: { id: string }) {
     );
   return (
     <>
-      <ProjectTabs id={id} tab="agreement" />
+      {!embedded && <ProjectTabs id={id} tab="agreement" />}
       <Heading
+        level={embedded ? "h2" : "h1"}
         title="Agreement"
         subtitle={`${p.title} · Version ${a.version}${current ? "" : " · History"}`}
       >
         <div className="actions">
-          {current && bothAccepted(data, a.id) && (
+          {!embedded && current && bothAccepted(data, a.id) && (
             <Link className="buttonlike" href={"/projects/" + id + "/delivery"}>
               Open delivery →
             </Link>
@@ -185,7 +186,7 @@ export function AgreementPage({ id }: { id: string }) {
               <Link
                 key={v.id}
                 className={`versionrow ${v.id === a.id ? "current" : ""}`}
-                href={"/projects/" + id + "/agreement?version=" + v.id}
+                href={embedded ? `/projects/${id}?phase=setup&version=${encodeURIComponent(v.id)}` : "/projects/" + id + "/agreement?version=" + v.id}
               >
                 <strong>
                   Version {v.version}
@@ -204,6 +205,7 @@ export function AgreementPage({ id }: { id: string }) {
       {editing && (
         <AgreementEditor
           project={p}
+          embedded={embedded}
           latest={editing.base}
           onClose={() => setEditing(null)}
         />
@@ -217,10 +219,12 @@ export function AgreementPage({ id }: { id: string }) {
 function AgreementEditor({
   project,
   latest: initialLatest,
+  embedded = false,
   onClose,
 }: {
   project: Project;
   latest?: Agreement;
+  embedded?: boolean;
   onClose: () => void;
 }) {
   const { data, refresh, notice } = useWorkspace(),
@@ -285,7 +289,7 @@ function AgreementEditor({
               p_milestones: cleaned,
             });
             await refresh();
-            router.replace("/projects/" + project.id + "/agreement?version=" + savedId);
+            router.replace(embedded ? `/projects/${project.id}?phase=setup&version=${encodeURIComponent(savedId)}` : "/projects/" + project.id + "/agreement?version=" + savedId);
             notice("Agreement saved. Both parties can review this version.");
             onClose();
           });

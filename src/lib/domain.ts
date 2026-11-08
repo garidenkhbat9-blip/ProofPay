@@ -96,7 +96,7 @@ export function safeUrl(value: string) {
 }
 export function safeReturn(value: string | null) {
   return value &&
-    /^\/(?:dashboard|judge-workspace|projects(?:\/[\w/-]+)?|handoff\/[\w-]+|invitations|reviews|agreements|payments|activity|settings)(?:\?[^#]*)?$/.test(
+      /^\/(?:dashboard|judge-workspace|projects(?:\/[\w/-]+)?|handoff\/[\w-]+|invitations|reviews|agreements|payments(?:\/demo)?|activity|settings)(?:\?[^#]*)?$/.test(
       value,
     )
     ? value
