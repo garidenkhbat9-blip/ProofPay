@@ -74,18 +74,20 @@ export function EvidenceAiReview({
       if (authError || !data.session || data.session.user.id !== identity)
         throw Error("Sign in again to analyze evidence.");
       if (current.current !== started) return;
-      const response = await fetch(
+      let response: Response;
+      try { response = await fetch(
         `/api/projects/${submission.project_id}/submissions/${submission.id}/ai-review`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${data.session.access_token}` },
           signal: AbortSignal.any([abort.signal, AbortSignal.timeout(115000)]),
         },
-      );
-      const body = await response.json();
+      ); } catch { throw Error("The analysis request could not reach the server or timed out. Your submission is unchanged; continue reviewing manually."); }
+      let body;
+      try { body = await response.json(); } catch { throw Error("The server did not return a usable analysis. No findings were generated. Try again later or review manually."); }
       if (!response.ok)
         throw Error(
-          typeof body.error === "string"
+          typeof body?.error === "string"
             ? body.error
             : "Analysis unavailable. Review the evidence manually.",
         );
@@ -147,7 +149,7 @@ export function EvidenceAiReview({
                     : "Review record"}
           </h3>
           <p>
-            {report
+            {busy ? "Checking the available text against each requirement. No approval or payment action will be taken." : report
               ? report.summary
               : "Compare the agreed requirements with the submitted text. Inspect visual work and linked content personally."}
           </p>

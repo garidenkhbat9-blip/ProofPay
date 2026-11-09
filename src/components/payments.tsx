@@ -10,6 +10,7 @@ import { checkoutUrl, paymentLabels, type Payment, type PaymentStatus } from "@/
 import type { PaymentDiagnostic } from "@/lib/payments/errors";
 import { createRefreshQueue } from "@/lib/workspace-sync";
 import "@/app/demo-payment.css";
+import { paymentSummary } from "@/lib/payment-summary";
 
 type PublicPayment = Pick<Payment, "id" | "project_id" | "milestone_id" | "freelancer_id" | "payer_id" | "amount" | "currency" | "invoice_number" | "status" | "provider_status" | "checkout_url" | "create_retry_allowed" | "last_verified_at" | "paid_at" | "reconciliation_status" | "last_error" | "created_at">;
 interface PaymentList {
@@ -83,6 +84,12 @@ export function PaymentWorkspace() {
   }
   const projects = data.projects.filter((p) => memberRole(data, p.id, user?.id) === perspective);
   const rows = (result?.payments || []).filter((p) => projects.some((project) => project.id === p.project_id));
+  const totals = result && !loadIssue && !result.truncated ? paymentSummary(rows) : null;
+  const approvedAmount = data.agreementError || data.deliveryError ? null : projects.reduce((sum, project) => {
+    const agreement = latestAgreement(data, project.id);
+    if (!agreement || !bothAccepted(data, agreement.id)) return sum;
+    return sum + data.milestones.filter(m => m.agreement_id === agreement.id && revisions(data, m.id)[0]?.status === "approved").reduce((amount, m) => amount + Math.round(Number(m.amount) * 100), 0);
+  }, 0);
   const milestones = projects.flatMap((project) => {
     const agreement = latestAgreement(data, project.id);
     return data.milestones.filter((m) => m.agreement_id === agreement?.id && !rows.some((p) => p.milestone_id === m.id))
@@ -93,8 +100,9 @@ export function PaymentWorkspace() {
       <button disabled={!!busy} onClick={() => void refresh()}>Refresh history</button>
     </Heading>
     <section className="demo-payment-entry" aria-label="Payment experiences"><div><span>DEMO PAYMENT</span><strong>Practice with simulated money</strong><Link className="buttonlike" href="/payments/demo">Try Demo Payment →</Link></div><div><span>PAYPAL SANDBOX</span><strong>Test a real PayPal Sandbox integration</strong><p>Existing provider test accounts, invoices and verified records below.</p></div></section>
-    <section className="overview"><div className="stat"><div className="statlabel">Active planned budget · excludes archived projects · not collected</div><div className="statvalue">{money(projectTotals(projects).plannedBudget)}</div></div></section>
-    <Notice>The assigned freelancer invoices the project client using their verified Sandbox merchant account. Approval alone does not make a payment.</Notice>
+    <section className="overview" aria-label="Payment amounts"><div className="stat"><div className="statlabel">Paid · confirmed by PayPal</div><div className="statvalue">{totals ? money(totals.paid) : "—"}</div></div><div className="stat"><div className="statlabel">Open invoices · awaiting payment confirmation</div><div className="statvalue">{totals ? money(totals.open) : "—"}</div></div></section>
+    <details className="card"><summary>Budget, approval & invoice totals</summary><p>Planned budget: {money(projectTotals(projects).plannedBudget)} · active projects, not earnings.</p><p>Approved work: {approvedAmount === null ? "Unavailable" : money(approvedAmount / 100)} · accepted current milestones, not payment.</p><p>Invoiced face value: {totals ? money(totals.invoiced) : "Unavailable"} · includes drafts, cancelled and refunded invoices.</p><p>Open invoice totals show full face values, not remaining balances. Paid totals exclude refunded and unconfirmed records. Totals cover the projects in this view.</p></details>
+    {!!rows.length && <Notice>Approval is not payment. Only PayPal-confirmed records count as paid.</Notice>}
     <PaymentProblem issue={loadIssue} /><PaymentProblem issue={result?.setupError || null} /><PaymentProblem issue={actionIssue} />
     {!result && !loadIssue && <p role="status">Loading payment history...</p>}
     {result && rows.map((p) => {
@@ -105,6 +113,8 @@ export function PaymentWorkspace() {
         <p className="subtle">Invoice {p.invoice_number} · {p.last_verified_at ? "Last checked " + new Date(p.last_verified_at).toLocaleString() : "Not yet verified with PayPal"}</p>
         {p.reconciliation_status === "ERROR" && <Notice>Payment status could not be refreshed. The payment has not been confirmed by this check. Previously verified information is retained.</Notice>}
         {p.status === "PAYMENT_PENDING" && <p>Payment is pending. Wait for PayPal confirmation, then refresh. Do not pay again.</p>}
+        {p.status === "UNPAID" && href && user?.id === p.payer_id && <p className="subtle">PayPal buyer sign-in is separate from ProofPay. Use only the dedicated Sandbox buyer provided privately by the organizer. Guest checkout is not guaranteed.</p>}
+        {p.status === "PAID" && <p className="subtle">This invoice is already paid and is available as verified history. It cannot be reused for another payment test.</p>}
         {p.status === "UNPAID" && !href && <Notice>PayPal has not provided a verified Sandbox checkout link. Refresh payment status, then ask the merchant to inspect the invoice in their Sandbox dashboard if the link remains unavailable.</Notice>}
         {p.status === "REQUIRES_ATTENTION" && <p>PayPal payment has not been confirmed. Ask the merchant to inspect this invoice; manual or external payment records are not treated as PayPal payments.</p>}
         <PaymentProblem issue={p.last_error} />
@@ -117,14 +127,14 @@ export function PaymentWorkspace() {
       </section>;
     })}
     {result && milestones.map(({ project, milestone: m, ready }) => <section className="card" key={m.id}>
-      <div className="sectionhead"><h2>{m.title}</h2><Badge>{ready ? "Ready for Payment" : "Awaiting Approval"}</Badge></div>
+      <div className="sectionhead"><h2>{m.title}</h2><Badge>{ready ? "Work approved · no invoice" : "Awaiting work approval"}</Badge></div>
       <p>{project.title} · {money(m.amount)} USD</p>
       {ready && Number(m.amount) === 0 ? <p>No payment is required for this zero-value milestone.</p> : ready && perspective === "freelancer" && user?.id === result.merchantFreelancerId && !result.setupError ?
         <button className="primary" disabled={!!busy} onClick={() => void action(m.id, `/api/projects/${project.id}/milestones/${m.id}/invoice`)}>{busy === m.id ? "Preparing invoice..." : "Create & send Sandbox invoice"}</button>
         : <p>{ready ? "The assigned freelancer must have a verified merchant connection before issuing the invoice." : "Both parties must accept the agreement and the client must approve the delivery."}</p>}
     </section>)}
     {result && !rows.length && <EmptyState icon="wallet" title="No invoices yet."
-      description={perspective === "client" ? "Invoices become available through the approved milestone workflow. The assigned freelancer needs a verified Sandbox merchant connection. Your planned budget is not collected revenue, and approval does not make a payment." : "After the client approves a milestone, the assigned freelancer can invoice through a verified Sandbox merchant connection. Approval alone does not create or pay an invoice."}>
+      description={perspective === "client" ? "After work approval, the assigned freelancer issues the Sandbox invoice. Approval is not payment." : "After client approval, invoice an eligible milestone through your verified merchant connection. Approval is not payment."}>
       <Link className="buttonlike forest" href="/projects">{perspective === "client" ? "View projects" : "View my jobs"} →</Link>
     </EmptyState>}
     {result && (rows.length > 0 || result.truncated) && <section className="card"><h2>Payment history</h2>{result.history.filter((h) => rows.some((p) => p.id === h.payment_id)).map((h) => <p key={h.id}>{new Date(h.created_at).toLocaleString()} · {rows.find((p) => p.id === h.payment_id)?.invoice_number} · {paymentLabels[h.status] || "Action Required"}</p>)}{!result.history.some(h => rows.some(p => p.id === h.payment_id)) && <p>No verified payment events for these projects yet.</p>}{result.truncated && <p>Showing recent records only. Contact support for older history.</p>}</section>}

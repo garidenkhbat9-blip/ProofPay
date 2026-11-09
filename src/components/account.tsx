@@ -34,12 +34,10 @@ export function SettingsPage() {
       <section className="card">
         <h2>Connections</h2>
         <p>
-          Supabase email authentication, projects, invitations, agreements and
-          delivery use the existing database.
+          Your account gives you access only to projects you create or join.
         </p>
         <p>
-          Website agreement drafting can use Gemini when configured on the
-          server. Drafts require your review and both parties’ acceptance.
+          Gemini helps draft website agreements and review supported text evidence. You review its suggestions; both participants accept the agreement.
         </p>
         <p>Automated website verification is not connected. PayPal Sandbox invoicing requires a verified freelancer merchant connection.</p>
       </section>

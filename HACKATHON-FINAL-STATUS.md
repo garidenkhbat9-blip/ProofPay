@@ -1,5 +1,7 @@
 # ProofPay hackathon completion status
 
+Latest reviewer-access checkpoint (2026-11-08): [REVIEWER-ACCESS-SETUP.md](REVIEWER-ACCESS-SETUP.md). Local suite now passes 215 tests, including 89 browser scenarios; optional existing-account OTP is implemented. Hosted email, migration/deployment state and real Sandbox E2E remain unverified. The 113-test results below are historical.
+
 Updated 2026-11-05 (Asia/Ulaanbaatar), including the SQL/AI continuation. Scope: this existing Next.js checkout and the Supabase/credentials selected by local configuration; new SQL checks used an isolated in-memory PostgreSQL instance only. Existing Sites hosting, design, user data and the owner's uncommitted sidebar edit were preserved. No commit, push, deployment, live migration, signup/sign-in, membership change, invoice or payment was performed.
 
 **Continuation result:** 113 Node tests pass. Migration 005 and two SQL authorization/workflow fixtures pass on PGlite 0.5.15. The previously blocked local SQL execution is resolved; hosted Supabase Auth/Storage and multi-connection concurrency remain unverified. A new tiny Gemini diagnostic timed out before response headers; provider calls stopped. Exact signed-object identity and cancellation handling were hardened. The minimal owner procedure is [OWNER-E2E-CHECKLIST.md](OWNER-E2E-CHECKLIST.md).

@@ -35,6 +35,7 @@ if (params.has('clientState')) {
 }
 if (params.get('workerState') === 'changes' && data.submissions[0]) { data.submissions[0].status='changes'; data.reviews.push({id:'review',submission_id:data.submissions[0].id,reviewed_by:'client-a',decision:'changes',note:'Please update the introduction.',confirmed_criteria:[],created_at:'2026-11-07'}); }
 let invitationAccepts=0, invitationRefreshes=0;
+if(params.has('agreementSetup'))data.members.push({project_id:'p',user_id:'worker',role:'freelancer'});
 let path = ({demopayment:'/payments/demo',invitations:'/invitations',detail:'/projects/p',projects:'/projects',agreement:'/projects/p/agreement',delivery:'/projects/p/delivery',reviews:'/reviews',payments:'/payments',activity:'/activity'})[view] || '/dashboard';
 const workspace = {user:{id:role === 'client'?'client-a':'worker',email:role === 'client'?'alex@example.test':'jamie@example.test',email_confirmed_at:'2026-01-01',user_metadata:{}},data,perspective:role,ready:true,loaded:true,loading:false,error:'',authError:'',refresh:async()=>{},refreshChecked:async()=>{
  if(refreshFails)throw Error('Fixture refresh failed');
@@ -50,6 +51,12 @@ if(view==='demopayment' && params.has('signedout'))workspace.user=null;
 if(view==='demopayment' && params.has('cloudFailure')){workspace.loaded=false;workspace.loading=true;workspace.error='Fixture storage unavailable';}
 const auth = {getSession:async()=>({data:{session:{user:{id:workspace.user.id},access_token:workspace.user.id}},error:null}),getUser:async(token)=>{await preferenceGate;const id=token||workspace.user?.id;return {data:{user:{id,email_confirmed_at:'confirmed',user_metadata:remote[id]||{}}},error:null};}};
 let aiCalls=0, reviewWrites=[];
+let otpRequests=[];
+if(params.has('otp')) {
+ auth.signInWithOtp=async(input)=>{otpRequests.push(input);return {error:null};};
+ auth.verifyOtp=async(input)=>{if(input.token!=='123456')return {error:{code:'otp_expired'},data:{session:null}};return {error:null,data:{session:{access_token:'fixture-only',user:{id:'reviewer'}}}};};
+ auth.getUser=async()=>{workspace.user={id:'reviewer',email:'reviewer@example.test',email_confirmed_at:'confirmed',user_metadata:{}};return {data:{user:workspace.user},error:null};};
+}
 if(params.has('wait')) {
  const state=params.get('wait');
  data.milestones[0].due_date='2026-11-01';
@@ -69,7 +76,7 @@ if(params.has('ai')) {
 globalThis.fetch = async (_url, init) => {
  if(view==='demopayment'){demoForbiddenCalls.push(String(_url));throw Error('Demo must not call any network endpoint');}
  if(String(_url).endsWith('/ai-review')) {
-  aiCalls++; await new Promise(resolve=>setTimeout(resolve,100));
+  aiCalls++; if(params.get('ai')==='loading')await new Promise(resolve=>{globalThis.releaseAi=resolve;}); else await new Promise(resolve=>setTimeout(resolve,100));
   if(params.get('ai')==='failure')return Response.json({error:'AI timed out. No saved work has changed. Try again.'},{status:503});
   return Response.json({projectId:'p',milestoneId:'m',agreementId:'a',agreementVersion:1,submissionId:'s',revision:1,model:'mock-provider',generatedAt:'2026-11-08T00:00:00Z',promptVersion:'evidence-text-v2',summary:'Site copy is present. The Figma link is missing and visual layouts need your inspection.',sources:[{id:'copy',label:'Site-copy.md',characters:120,sha256:'a'.repeat(64)},{id:'submission-notes',label:'Submission notes (author claims)',characters:30,sha256:'b'.repeat(64)}],unread:[{id:'image',label:'Desktop-preview.png',reason:'Image content not checked'},{id:'pdf',label:'Delivery-brief.pdf',reason:'PDF content not checked'}],observations:data.criteria.filter(c=>c.milestone_id==='m').map((c,i)=>({criterionId:c.id,status:['SUPPORTS','MISSING','NOT_CHECKED'][i],observation:['The uploaded copy contains the requested text.','No Figma link was submitted.','Image contents are not inspected.'][i],evidenceIds:i===0?['copy']:i===2?['image']:[],limitations:['Text analysis only; inspect the original evidence.'],citations:i===0?[{sourceId:'copy',quote:'Welcome to our studio.'}]:[],missingEvidence:i===1?'Figma link missing':'',questions:[]}))});
  }

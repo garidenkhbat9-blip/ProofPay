@@ -13,7 +13,7 @@ export interface Payment {
   reconciliation_status: string; last_error: import("./errors").PaymentDiagnostic | null;
 }
 export const paymentLabels: Record<PaymentStatus, string> = {
-  NOT_STARTED: "Ready for Payment", CREATING: "Creating Invoice", DRAFT: "Invoice Created",
+  NOT_STARTED: "Approved · invoice not created", CREATING: "Creating Invoice", DRAFT: "Draft invoice · not sent",
   UNPAID: "Awaiting Payment", PAYMENT_PENDING: "Payment Pending", PAID: "Paid — Confirmed by PayPal",
   FAILED: "Payment Failed", CANCELLED: "Payment Cancelled", REFUNDED: "Refunded — Confirmed by PayPal", REQUIRES_ATTENTION: "Action Required",
 };

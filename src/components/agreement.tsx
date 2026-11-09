@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useWorkspace } from "./provider";
 import { ProjectTabs } from "./project-navigation";
@@ -19,13 +19,17 @@ import { getSupabase } from "@/lib/supabase";
 import { rpc } from "@/lib/cloud";
 import type { Agreement, MilestoneDraft, Project } from "@/lib/types";
 import { AgreementDraftBuilder } from "./agreement-draft-builder";
-export function AgreementPage({ id, embedded = false }: { id: string; embedded?: boolean }) {
+export function AgreementPage({ id, embedded = false, draftRequest, primaryDraftElsewhere = false }: { id: string; embedded?: boolean; draftRequest?: {projectId: string; sequence: number}; primaryDraftElsewhere?: boolean }) {
   const { data, user } = useWorkspace(),
     params = useSearchParams();
   const [editing, setEditing] = useState<{ base?: Agreement } | null>(null),
     [accepting, setAccepting] = useState<Agreement | null>(null);
   const p = data.projects.find((p) => p.id === id),
     role = memberRole(data, id, user?.id);
+  const canOpenDraft = role === "client" && !!p && p.status !== "archived" && !data.agreementError && !data.agreements.some(a => a.project_id === id) && !params.has("version");
+  useEffect(() => {
+    if (draftRequest?.projectId === id && canOpenDraft) setEditing({});
+  }, [draftRequest, id, canOpenDraft]);
   if (!p || !role) return <Empty>Project not found.</Empty>;
   if (data.agreementError)
     return (
@@ -58,14 +62,14 @@ export function AgreementPage({ id, embedded = false }: { id: string; embedded?:
         {!embedded && !requested && !guidance.hasFreelancer && p.status !== "archived" && <EmptyState icon="user" title={guidance.teamTitle} description={guidance.teamDescription}>
           {guidance.canInvite && <Link className="buttonlike forest" href={guidance.teamHref}>{guidance.teamLabel} →</Link>}
         </EmptyState>}
-        <EmptyState icon="report" title={requested ? "Agreement version not found." : "No agreement yet."}
+        {primaryDraftElsewhere ? <p className="pw-context">Define scope, milestones and acceptance criteria. Both participants must accept the agreement before delivery.</p> : <EmptyState icon="report" title={requested ? "Agreement version not found." : embedded ? "Define the work and acceptance criteria" : "No agreement yet."}
           description={embedded && !requested && p.status !== "archived" ? "Both participants must accept the same agreement version before delivery; acceptance never authorizes payment." : requested ? "This version is not available to your account. Open the latest version to continue." : p.status === "archived" ? "This project is archived. Reopen an eligible draft from the project actions before adding an agreement." : role === "client"
             ? "Define scope, deliverables, milestones, amounts and acceptance requirements. You can save a draft before a freelancer joins. Both parties must accept the final version before delivery. Creating or accepting an agreement does not trigger payment."
             : "The client prepares the scope, deliverables, milestones, amounts and acceptance requirements. You both review and accept the latest version before delivery. Acceptance does not trigger payment."}>
           {guidance.canDraft && !requested && <button className={guidance.hasFreelancer ? "primary" : ""} onClick={() => setEditing({})}>Create agreement draft</button>}
           {p.status === "archived" && <Link href={`/projects/${id}`}>View project records →</Link>}
           {requested && <Link href={"/projects/" + id + "/agreement"}>Open latest version</Link>}
-        </EmptyState>
+        </EmptyState>}
         {editing && (
           <AgreementEditor project={p} embedded={embedded} onClose={() => setEditing(null)} />
         )}

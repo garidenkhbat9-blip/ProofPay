@@ -39,6 +39,7 @@ export function ProjectWorkspace({
     return ()=>clearTimeout(timer);
   },[id,data.invitations,clock]);
   const [legacyTeam, setLegacyTeam] = useState(false);
+  const [draftRequest, setDraftRequest] = useState<{projectId: string; sequence: number}>();
   useEffect(() => {
     const update = () =>
       setLegacyTeam(window.location.hash === "#project-team");
@@ -71,6 +72,7 @@ export function ProjectWorkspace({
   const selected =
     projectPhase(params.get("phase")) || (legacyTeam ? "setup" : primary.phase);
   const requestedLink = params.get("handoff");
+  const draftHere = selected === "setup" && !model.agreement && model.role === "client" && !model.archived && !model.unavailable && !params.has("version") && data.members.some(m => m.project_id === id && m.role === "freelancer");
   const handoff =
     requestedLink &&
     data.links.find((l) => l.id === requestedLink && l.project_id === id);
@@ -112,14 +114,16 @@ export function ProjectWorkspace({
           <button className="primary" onClick={onInvite}>
             Invite
           </button>
-        ) : (
+        ) : draftHere ? (
+          <button className="primary" onClick={() => setDraftRequest(previous => ({projectId: id, sequence: (previous?.sequence || 0) + 1}))}>Create agreement draft</button>
+        ) : primary.href !== workspaceHref(id, selected, handoff ? handoff.id : undefined) || params.has("version") ? (
           <Link
             className="buttonlike pw-primary"
             href={primary.href.startsWith("#") ? primary.href : primary.href + "#project-phase-panel"}
           >
             {primary.label} <span aria-hidden="true">→</span>
           </Link>
-        )}
+        ) : null}
       </section>
       <ProjectPhaseNavigation id={id} selected={selected} />
       <div className="pw-summary" aria-label="Current agreement progress">
@@ -172,13 +176,9 @@ export function ProjectWorkspace({
             {setup}
             <div className="pw-section-title">
               <h2>Agreement & milestones</h2>
-              <span>
-                {model.agreement
-                  ? `Latest: v${model.agreement.version}`
-                  : "Not prepared"}
-              </span>
+              {model.agreement && <span>Latest: v{model.agreement.version}</span>}
             </div>
-            <AgreementPage id={id} embedded />
+            <AgreementPage id={id} embedded draftRequest={draftRequest} primaryDraftElsewhere={draftHere} />
           </>
         )}
         {(selected === "deliver" || selected === "review") && (

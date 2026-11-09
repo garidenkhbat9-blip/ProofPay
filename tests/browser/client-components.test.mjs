@@ -68,6 +68,8 @@ test('client workspace components: desktop/mobile tour, actions and responsive l
     };
     await send('Runtime.enable');
     const cases = [
+      ['login-otp-client','view=login&otp=1&intent=client',1440,1100],
+      ['login-otp-freelancer','view=login&otp=1&intent=freelancer',390,1100],
       ...[1440,1024,768,390,320].map(width=>[`demo-${width}`,width===1440?'view=demopayment':'view=demopayment&empty=1',width,1200]),
       ...['ready','invoice','pending','failure','cancelled'].map(state=>[`demo-${state}`,`view=demopayment&empty=1&demoState=${state}`,state==='failure'?390:1440,1200]),
       ['demo-cloud-failure','view=demopayment&empty=1&cloudFailure=1',390,1200],
@@ -77,11 +79,15 @@ test('client workspace components: desktop/mobile tour, actions and responsive l
       ...[1440,1024,768,390,320].map(width=>[`ai-${width}`, 'view=detail&clientState=review&phase=review&handoff=l&ai=results', width, 1200]),
       ['ai-empty','view=detail&clientState=review&phase=review&handoff=l&ai=empty',1440,1200],
       ['ai-failure','view=detail&clientState=review&phase=review&handoff=l&ai=failure',390,1200],
+      ['ai-loading','view=detail&clientState=review&phase=review&handoff=l&ai=loading',390,1200],
       ['ai-long','view=detail&clientState=review&phase=review&handoff=l&ai=long',320,1200],
       ['ai-freelancer','view=detail&clientState=review&phase=review&handoff=l&role=freelancer&ai=freelancer',390,1200],
       ['ai-history','view=detail&clientState=review&phase=review&handoff=l&ai=history',1440,1200],
       ['ai-decision','view=detail&clientState=review&phase=review&handoff=l&ai=decision',1440,1200],
       ['workspace-setup', 'view=detail&phase=setup', 1440, 1100],
+      ['workspace-agreement-desktop','view=detail&phase=setup&agreementSetup=1',1440,1100],
+      ['workspace-agreement-mobile','view=detail&phase=setup&agreementSetup=1',390,1100],
+      ['payments-mobile','view=payments',390,1100],
       ['workspace-review', 'view=detail&clientState=review&phase=review&handoff=l', 1440, 1100],
       ['workspace-tablet', 'view=detail&role=freelancer&clientState=review&phase=review', 768, 1100],
       ['workspace-deliver', 'view=detail&role=freelancer&clientState=review&workerState=changes&phase=deliver&handoff=l', 390, 1100],
@@ -146,12 +152,37 @@ test('client workspace components: desktop/mobile tour, actions and responsive l
         results.push({name,authentication:'existing login redirect; no demo controls'});continue;
       }
       await waitFor(`location.search.includes('case=${name}') && !!document.querySelector('${authCase ? '.authcard .google-auth-button' : name.startsWith('onboarding') ? '.workspace-options' : '#workspace-main'}')`);
+      if(name.startsWith('login-otp')) {
+        await evaluate(`button('Sign in without a password').click()`);
+        await waitFor(`!!document.querySelector('#reviewer-email')`);
+        await evaluate(`document.querySelector('#reviewer-email').value='reviewer@example.test';document.querySelector('#reviewer-email').form.requestSubmit();document.querySelector('#reviewer-email')?.form.requestSubmit()`);
+        await waitFor(`!!document.querySelector('#reviewer-code')`);
+        assert.equal(await evaluate('otpRequests.length'),1);
+        assert(await evaluate(`otpRequests[0].options.shouldCreateUser===false`));
+        assert(await evaluate(`!document.querySelector('input[type="password"]') && !!document.querySelector('.google-auth-button')`));
+        await evaluate(`document.querySelector('#reviewer-code').value='111111';document.querySelector('#reviewer-code').form.requestSubmit()`);
+        await waitFor(`!!document.querySelector('[role="alert"]')`);
+        assert.equal(await evaluate('demoRedirect'),'');
+        const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
+        await writeFile(join(artifacts,`${name}.png`),Buffer.from(shot.data,'base64'));
+        await evaluate(`document.querySelector('#reviewer-code').value='123456';document.querySelector('#reviewer-code').form.requestSubmit()`);
+        await waitFor(`demoRedirect.startsWith('/dashboard?perspective=')`);
+        assert.equal(await evaluate('demoRedirect'),'/dashboard?perspective='+ (name.endsWith('client')?'client':'freelancer'));
+        assert.equal(browserErrors.length,0,browserErrors.join('\n'));
+        results.push({name,passwordless:'mock OTP verified; one request; safe perspective return'});continue;
+      }
       if (name.startsWith('workspace-')) {
         await waitFor(`!!document.querySelector('.project-workspace')`);
         assert.equal(await evaluate(`document.querySelectorAll('.project-phase-nav a').length`), 4);
         assert.equal(await evaluate(`document.querySelectorAll('h1').length`), 1);
         assert(await evaluate(`!document.querySelector('.project-progress') && !document.querySelector('.delivery-steps')`));
         if(name==='workspace-setup') assert(await evaluate(`!!button('Invite') && !!button('Create agreement draft')`));
+        if(name.startsWith('workspace-agreement')) {
+          assert(await evaluate(`!!button('Create agreement draft') && !document.querySelector('.pw-focus a')`));
+          assert(await evaluate(`document.querySelector('.pw-focus button')===button('Create agreement draft') && [...document.querySelectorAll('button')].filter(b=>b.textContent.trim()==='Create agreement draft').length===1`));
+          assert(await evaluate(`!document.querySelector('.pw-phase-panel').textContent.includes('No agreement yet') && !document.querySelector('.pw-phase-panel').textContent.includes('Not prepared')`));
+          assert.equal(await evaluate(`document.querySelectorAll('.project-phase-nav strong')[2].textContent`),'Review');
+        }
         if(name==='workspace-review') assert(await evaluate(`!!document.querySelector('.ai-review') && !!button('Approve milestone')`));
         if(name==='workspace-deliver') assert(await evaluate(`!!document.querySelector('textarea[name="notes"]')`));
         if(name==='workspace-payment') assert(await evaluate(`document.querySelector('.pw-phase-panel').textContent.includes('Awaiting work approval')`));
@@ -167,6 +198,12 @@ test('client workspace components: desktop/mobile tour, actions and responsive l
           assert(await evaluate(`document.querySelector('.ai-consent').textContent.includes('Gemini')`));
           if(name!=='ai-empty') {
             await evaluate(`button('Analyze evidence').click(); button('Analyze evidence')?.click()`);
+            if(name==='ai-loading') {
+              await waitFor(`typeof globalThis.releaseAi==='function'`);
+              assert(await evaluate(`button('Analyzing…').disabled && document.querySelector('.ai-summary').getAttribute('aria-busy')==='true' && !!button('Approve milestone')`));
+              assert.equal(await evaluate('aiCalls'),1);
+              await evaluate(`globalThis.releaseAi()`);
+            }
             await waitFor(name==='ai-failure'?`!!button('Retry analysis')`:`!!document.querySelector('.ai-summary a')`);
             assert.equal(await evaluate('aiCalls'),1);
             assert.equal(await evaluate('reviewWrites.length'),0,'AI cannot mutate human review');
@@ -309,7 +346,7 @@ test('client workspace components: desktop/mobile tour, actions and responsive l
         assert(await evaluate(`!document.querySelector('.dashboard-shortcuts') && !document.querySelector('.dash-aside-card')`));
         if (query.includes('clientState=review')) {
           assert.equal(await evaluate(`document.querySelector('.co-focus-action').getAttribute('href')`), '/handoff/l');
-          assert(await evaluate(`!!document.querySelector('.co-ai')`));
+          assert(await evaluate(`!document.querySelector('.co-ai')`),'The primary review action must not be duplicated by the AI aside');
         }
         if (name === 'client-unavailable') assert.equal(await evaluate(`document.querySelectorAll('.co-metric strong')[1].textContent`), '\u2014');
         if (name === 'client-archived') assert.equal(await evaluate(`document.querySelector('.co-metric strong').textContent`), '0');
@@ -353,6 +390,16 @@ test('client workspace components: desktop/mobile tour, actions and responsive l
       }
       const screenshot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
       await writeFile(join(artifacts, `${name}.png`), Buffer.from(screenshot.data, 'base64'));
+      if(name.startsWith('workspace-agreement')) {
+        await evaluate(`button('Create agreement draft').click()`);
+        await waitFor(`!!document.querySelector('dialog[open]')`);
+        assert(await evaluate(`document.querySelector('dialog[open]').textContent.includes('Create agreement draft')`));
+        await evaluate(`document.querySelector('[aria-label="Close dialog"]').click()`);
+      }
+      if(name.startsWith('payments-')) {
+        assert(await evaluate(`document.querySelector('[aria-label="Payment amounts"]').textContent.includes('Paid · confirmed by PayPal') && !document.querySelector('[aria-label="Payment amounts"]').textContent.includes('Planned budget')`));
+        assert(await evaluate(`![...document.querySelectorAll('details')].find(x=>x.textContent.includes('Budget, approval')).open`));
+      }
       if(name==='demo-1440'||name==='demo-390') {
         await evaluate(`document.querySelector('.dp-sample').scrollIntoView()`);
         const sampleShot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});

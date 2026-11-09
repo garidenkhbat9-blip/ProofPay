@@ -9,6 +9,26 @@ const options = () => ({key: "fake-secret", system: "system", brief: "brief", sc
 const reply = (body: unknown, status = 200) => (async () => Response.json(body, {status})) as typeof fetch;
 const envelope = (value: unknown = data) => ({candidates: [{finishReason: "STOP", content: {parts: [{thought: true, text: "ignore"}, {text: JSON.stringify(value)}]}}]});
 const status = (n: number) => (e: unknown) => e instanceof ApiError && e.status === n && !e.message.includes("fake-secret");
+test("Gemini user messages distinguish permission, payload, quota and actual provider unavailability", async()=>{
+ for(const [http, message] of [[400,/rejected/],[401,/denied access/],[403,/denied access/],[404,/model or endpoint/],[429,/quota limit/],[503,/returned a temporary/]] as const) {
+  await assert.rejects(generateStructured(options(),reply({error:{message:"private details"}},http)),e=>e instanceof GeminiError && e.diagnostic.httpStatus===http && message.test(e.message) && !e.message.includes("private"));
+ }
+});
+test("Gemini separates explicit transport timeout and DNS failure without exposing error detail",async()=>{
+ for(const [error,kind] of [[new DOMException("secret","TimeoutError"),"TIMEOUT"],[new TypeError("secret",{cause:{code:"ENOTFOUND",hostname:"private"}}),"NETWORK"]] as const){
+  await assert.rejects(generateStructured(options(),async()=>{throw error;}),e=>{
+   assert(e instanceof GeminiError);assert.equal(e.diagnostic.kind,kind);assert.equal(e.diagnostic.httpStatus,undefined);assert.doesNotMatch(JSON.stringify(e),/secret|private/);return true;
+  });
+ }
+});
+test("Gemini content safeguards are distinct from malformed output and never return findings",async()=>{
+ for(const body of [{promptFeedback:{blockReason:"SAFETY"}},{candidates:[{finishReason:"SAFETY"}]}]) await assert.rejects(generateStructured(options(),reply(body)),e=>e instanceof GeminiError && e.diagnostic.kind==="SAFETY" && e.status===422);
+});
+test("explicit invalid-key reasons are distinguished without exposing provider metadata",async()=>{
+ await assert.rejects(generateStructured(options(),reply({error:{status:"INVALID_ARGUMENT",details:[{reason:"API_KEY_INVALID",metadata:{key:"private-secret"}}]}},400)),e=>{
+  assert(e instanceof GeminiError);assert.equal(e.diagnostic.providerReason,"API_KEY_INVALID");assert.match(e.message,/server API key/);assert.doesNotMatch(JSON.stringify(e),/private-secret/);return true;
+ });
+});
 test("Gemini transport sends structured REST and parses only final output", async () => {
   const transport = (async (url, init) => {
     assert.match(String(url), /gemini-3.8-flash:generateContent$/);

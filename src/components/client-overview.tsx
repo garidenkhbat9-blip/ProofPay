@@ -55,7 +55,7 @@ export function ClientOverview({ projectIds = [] }: { projectIds?: string[] }) {
       ] as const).map(([label, count, detail]) => <div className="co-metric" key={label}><span>{label}</span><strong>{count ?? "—"}</strong><small>{count === null ? "Status unavailable" : detail}</small></div>)}
     </section>
 
-    {aiReview?.step && <aside className="co-ai" aria-label="AI review opportunity"><span className="co-ai-mark" aria-hidden="true">✧</span><div><strong>AI-assisted evidence review</strong><p>Explore submitted text with Gemini; the decision stays with you.</p></div><Link href={aiReview.step.href}>Open evidence assistant <span aria-hidden="true">↗</span></Link></aside>}
+    {aiReview?.step && aiReview.step.href !== next?.step?.href && <aside className="co-ai" aria-label="AI review opportunity"><span className="co-ai-mark" aria-hidden="true">✧</span><div><strong>AI-assisted evidence review</strong><p>Explore submitted text with Gemini; the decision stays with you.</p></div><Link href={aiReview.step.href}>Open evidence assistant <span aria-hidden="true">↗</span></Link></aside>}
 
     <section className="co-projects" aria-labelledby="co-projects-title">
       <div className="co-section-head"><div><h2 id="co-projects-title">Your projects <span>{rows.length}</span></h2><p>{active.length ? "The work in motion, and what comes next." : rows.length ? "Your retained project records." : "Your first project will appear here."}</p></div><button className="ghost" disabled={loading} onClick={() => void refresh()}>{loading ? "Refreshing…" : "Refresh"}</button></div>

@@ -14,10 +14,10 @@ export type ProjectPhase = "setup" | "deliver" | "review" | "payment";
 export type PhaseState =
   "complete" | "current" | "waiting" | "blocked" | "not_started";
 export const projectPhaseNames = {
-  setup: "Set up",
-  deliver: "Deliver",
-  review: "AI review",
-  payment: "Payment",
+  setup: "Agreement",
+  deliver: "Delivery",
+  review: "Review",
+  payment: "Payments",
 } as const;
 export function projectPhase(value: string | null): ProjectPhase | null {
   return value && Object.hasOwn(projectPhaseNames, value)
@@ -302,7 +302,7 @@ export function projectWorkspace(
   }[] = [
     {
       id: "setup",
-      label: "Set up",
+      label: "Agreement",
       state: frozen
         ? "blocked"
         : ready
@@ -315,7 +315,7 @@ export function projectWorkspace(
     },
     {
       id: "deliver",
-      label: "Deliver",
+      label: "Delivery",
       state:
         frozen || !ready
           ? "blocked"
@@ -331,7 +331,7 @@ export function projectWorkspace(
     },
     {
       id: "review",
-      label: "AI review",
+      label: "Review",
       state:
         frozen || !ready
           ? "blocked"
@@ -349,7 +349,7 @@ export function projectWorkspace(
     },
     {
       id: "payment",
-      label: "Payment",
+      label: "Payments",
       state:
         frozen || !ready || !!data.paymentError
           ? "blocked"

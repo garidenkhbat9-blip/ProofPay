@@ -1,5 +1,7 @@
 # Explore ProofPay: architecture correction
 
+2026-11-08 update: the preserved login now offers optional existing-account email OTP. Hosted template/SMTP setup and real payment verification remain external gates. See [REVIEWER-ACCESS-SETUP.md](REVIEWER-ACCESS-SETUP.md) for current status and the controlled single-payment procedure; historical checks below are not current deployment evidence.
+
 ## Audit findings
 
 1. Client/Freelancer are presentation perspectives, deliberately available to one account because project roles can differ between projects. Supabase identity is separate from `project_members`, the UI preference, and verified PayPal merchant ownership.

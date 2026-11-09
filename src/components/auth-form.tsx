@@ -18,6 +18,7 @@ import { useWorkspace } from "./provider";
 import { Icon, useTask, FormMessage } from "./ui";
 import { PasswordField } from "./password-field";
 import { GoogleAuthButton } from "./google-sign-in";
+import { ReviewerSignIn } from "./reviewer-sign-in";
 import { authCooldown, deferAuth } from "@/lib/auth-cooldown";
 import {
   authErrorMessage,
@@ -32,6 +33,8 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     params = useSearchParams();
   const task = useTask();
   const [googlePending, setGooglePending] = useState(false);
+  const [emailCode, setEmailCode] = useState(false);
+  const [codeBusy, setCodeBusy] = useState(false);
   const requestLock = useRef(false);
   const [pendingEmail, setPendingEmail] = useState("");
   const [cooldown, setCooldown] = useState(0);
@@ -289,7 +292,8 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                     ? `Sign in to continue to your ${requestedRole === "client" ? "Client" : "Freelancer"} workspace.`
                     : "Sign in to your workspace."}
           </p>
-          <form onSubmit={submit} noValidate aria-busy={task.busy}>
+          {mode === "login" && <button type="button" disabled={task.busy || codeBusy || googlePending || submitted || !ready} onClick={() => setEmailCode(!emailCode)}>{emailCode ? "Use email and password" : "Sign in without a password"}</button>}
+          {mode === "login" && emailCode ? <ReviewerSignIn destination={destination} disabled={!ready || !!authError || googlePending || submitted} cooldown={cooldown} onBusy={setCodeBusy} onVerified={() => setSubmitted(true)} /> : <form onSubmit={submit} noValidate aria-busy={task.busy}>
             {signup && (
               <>
                 <div className="role-picker" role="group" aria-label="How will you use ProofPay?">
@@ -425,10 +429,10 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                           ? "Save password"
                           : "Sign in"}
             </button>
-          </form>
+          </form>}
           {(mode === "login" || signup) && <>
             <div className="authdivider">{signup ? "or sign up with" : "or continue with"}</div>
-            <GoogleAuthButton intent={signup ? role : requestedRole} disabled={task.busy || submitted || !ready} onBusy={setGooglePending} />
+            <GoogleAuthButton intent={signup ? role : requestedRole} disabled={task.busy || codeBusy || submitted || !ready} onBusy={setGooglePending} />
           </>}
           <p className="authalternate">
             {signup ? "Already have an account?" : "New to ProofPay?"}{" "}
