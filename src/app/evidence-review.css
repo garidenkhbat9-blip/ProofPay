@@ -91,7 +91,7 @@
 }
 .ai-desk {
   display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 0.95fr) minmax(0, 1.5fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
   margin-top: 26px;
 }
 .ai-desk > section {
@@ -120,6 +120,16 @@
   list-style: none;
   padding: 0;
   margin: 0;
+}
+.ai-requirements > summary {
+  cursor: pointer;
+  padding: 12px 0;
+  font-size: 13px;
+  font-weight: 650;
+  border-bottom: 1px solid #dce3da;
+}
+.ai-requirements[open] > summary {
+  margin-bottom: 18px;
 }
 .ai-requirements li {
   border-bottom: 1px solid #e2e7df;

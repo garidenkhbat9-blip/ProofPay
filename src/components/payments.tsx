@@ -99,10 +99,9 @@ export function PaymentWorkspace() {
     <Heading title={perspective === "client" ? "Payments" : "Earnings"} subtitle="PayPal Sandbox · Test payments only">
       <button disabled={!!busy} onClick={() => void refresh()}>Refresh history</button>
     </Heading>
-    <section className="demo-payment-entry" aria-label="Payment experiences"><div><span>DEMO PAYMENT</span><strong>Practice with simulated money</strong><Link className="buttonlike" href="/payments/demo">Try Demo Payment →</Link></div><div><span>PAYPAL SANDBOX</span><strong>Test a real PayPal Sandbox integration</strong><p>Existing provider test accounts, invoices and verified records below.</p></div></section>
+    <details className="card"><summary>Try a simulated payment</summary><section className="demo-payment-entry" aria-label="Payment experiences"><div><span>DEMO PAYMENT</span><strong>Practice with simulated money</strong><Link className="buttonlike" href="/payments/demo">Try Demo Payment →</Link></div><div><span>PAYPAL SANDBOX</span><p>Sandbox invoices and payment records are listed on this page.</p></div></section></details>
     <section className="overview" aria-label="Payment amounts"><div className="stat"><div className="statlabel">Paid · confirmed by PayPal</div><div className="statvalue">{totals ? money(totals.paid) : "—"}</div></div><div className="stat"><div className="statlabel">Open invoices · awaiting payment confirmation</div><div className="statvalue">{totals ? money(totals.open) : "—"}</div></div></section>
     <details className="card"><summary>Budget, approval & invoice totals</summary><p>Planned budget: {money(projectTotals(projects).plannedBudget)} · active projects, not earnings.</p><p>Approved work: {approvedAmount === null ? "Unavailable" : money(approvedAmount / 100)} · accepted current milestones, not payment.</p><p>Invoiced face value: {totals ? money(totals.invoiced) : "Unavailable"} · includes drafts, cancelled and refunded invoices.</p><p>Open invoice totals show full face values, not remaining balances. Paid totals exclude refunded and unconfirmed records. Totals cover the projects in this view.</p></details>
-    {!!rows.length && <Notice>Approval is not payment. Only PayPal-confirmed records count as paid.</Notice>}
     <PaymentProblem issue={loadIssue} /><PaymentProblem issue={result?.setupError || null} /><PaymentProblem issue={actionIssue} />
     {!result && !loadIssue && <p role="status">Loading payment history...</p>}
     {result && rows.map((p) => {
@@ -114,7 +113,6 @@ export function PaymentWorkspace() {
         {p.reconciliation_status === "ERROR" && <Notice>Payment status could not be refreshed. The payment has not been confirmed by this check. Previously verified information is retained.</Notice>}
         {p.status === "PAYMENT_PENDING" && <p>Payment is pending. Wait for PayPal confirmation, then refresh. Do not pay again.</p>}
         {p.status === "UNPAID" && href && user?.id === p.payer_id && <p className="subtle">PayPal buyer sign-in is separate from ProofPay. Use only the dedicated Sandbox buyer provided privately by the organizer. Guest checkout is not guaranteed.</p>}
-        {p.status === "PAID" && <p className="subtle">This invoice is already paid and is available as verified history. It cannot be reused for another payment test.</p>}
         {p.status === "UNPAID" && !href && <Notice>PayPal has not provided a verified Sandbox checkout link. Refresh payment status, then ask the merchant to inspect the invoice in their Sandbox dashboard if the link remains unavailable.</Notice>}
         {p.status === "REQUIRES_ATTENTION" && <p>PayPal payment has not been confirmed. Ask the merchant to inspect this invoice; manual or external payment records are not treated as PayPal payments.</p>}
         <PaymentProblem issue={p.last_error} />
@@ -133,8 +131,8 @@ export function PaymentWorkspace() {
         <button className="primary" disabled={!!busy} onClick={() => void action(m.id, `/api/projects/${project.id}/milestones/${m.id}/invoice`)}>{busy === m.id ? "Preparing invoice..." : "Create & send Sandbox invoice"}</button>
         : <p>{ready ? "The assigned freelancer must have a verified merchant connection before issuing the invoice." : "Both parties must accept the agreement and the client must approve the delivery."}</p>}
     </section>)}
-    {result && !rows.length && <EmptyState icon="wallet" title="No invoices yet."
-      description={perspective === "client" ? "After work approval, the assigned freelancer issues the Sandbox invoice. Approval is not payment." : "After client approval, invoice an eligible milestone through your verified merchant connection. Approval is not payment."}>
+    {result && !rows.length && !milestones.length && <EmptyState icon="wallet" title="No invoices yet."
+      description={perspective === "client" ? "Your freelancer can invoice after you approve the work." : "Approved milestones will appear here for invoicing."}>
       <Link className="buttonlike forest" href="/projects">{perspective === "client" ? "View projects" : "View my jobs"} →</Link>
     </EmptyState>}
     {result && (rows.length > 0 || result.truncated) && <section className="card"><h2>Payment history</h2>{result.history.filter((h) => rows.some((p) => p.id === h.payment_id)).map((h) => <p key={h.id}>{new Date(h.created_at).toLocaleString()} · {rows.find((p) => p.id === h.payment_id)?.invoice_number} · {paymentLabels[h.status] || "Action Required"}</p>)}{!result.history.some(h => rows.some(p => p.id === h.payment_id)) && <p>No verified payment events for these projects yet.</p>}{result.truncated && <p>Showing recent records only. Contact support for older history.</p>}</section>}

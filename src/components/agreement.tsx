@@ -62,10 +62,10 @@ export function AgreementPage({ id, embedded = false, draftRequest, primaryDraft
         {!embedded && !requested && !guidance.hasFreelancer && p.status !== "archived" && <EmptyState icon="user" title={guidance.teamTitle} description={guidance.teamDescription}>
           {guidance.canInvite && <Link className="buttonlike forest" href={guidance.teamHref}>{guidance.teamLabel} →</Link>}
         </EmptyState>}
-        {primaryDraftElsewhere ? <p className="pw-context">Define scope, milestones and acceptance criteria. Both participants must accept the agreement before delivery.</p> : <EmptyState icon="report" title={requested ? "Agreement version not found." : embedded ? "Define the work and acceptance criteria" : "No agreement yet."}
-          description={embedded && !requested && p.status !== "archived" ? "Both participants must accept the same agreement version before delivery; acceptance never authorizes payment." : requested ? "This version is not available to your account. Open the latest version to continue." : p.status === "archived" ? "This project is archived. Reopen an eligible draft from the project actions before adding an agreement." : role === "client"
-            ? "Define scope, deliverables, milestones, amounts and acceptance requirements. You can save a draft before a freelancer joins. Both parties must accept the final version before delivery. Creating or accepting an agreement does not trigger payment."
-            : "The client prepares the scope, deliverables, milestones, amounts and acceptance requirements. You both review and accept the latest version before delivery. Acceptance does not trigger payment."}>
+        {primaryDraftElsewhere ? null : <EmptyState icon="report" title={requested ? "Agreement version not found." : embedded && role === "client" ? "Prepare the agreement" : "No agreement yet."}
+          description={requested ? "Open the latest version to continue." : p.status === "archived" ? "Reopen an eligible draft to add an agreement." : role === "client"
+            ? "Set the scope, milestones and requirements. You can draft before the freelancer joins."
+            : "The client will prepare an agreement for you to review."}>
           {guidance.canDraft && !requested && <button className={guidance.hasFreelancer ? "primary" : ""} onClick={() => setEditing({})}>Create agreement draft</button>}
           {p.status === "archived" && <Link href={`/projects/${id}`}>View project records →</Link>}
           {requested && <Link href={"/projects/" + id + "/agreement"}>Open latest version</Link>}
@@ -87,7 +87,7 @@ export function AgreementPage({ id, embedded = false, draftRequest, primaryDraft
       <Heading
         level={embedded ? "h2" : "h1"}
         title="Agreement"
-        subtitle={`${p.title} · Version ${a.version}${current ? "" : " · History"}`}
+        subtitle={`${embedded ? "" : p.title + " · "}Version ${a.version}${current ? "" : " · History"}`}
       >
         <div className="actions">
           {!embedded && current && bothAccepted(data, a.id) && (
@@ -100,7 +100,7 @@ export function AgreementPage({ id, embedded = false, draftRequest, primaryDraft
           )}
         </div>
       </Heading>
-      {!hasFreelancer && p.status !== "archived" && <EmptyState icon="user" title={guidance.teamTitle} description={guidance.teamDescription}>
+      {!embedded && !hasFreelancer && p.status !== "archived" && <EmptyState icon="user" title={guidance.teamTitle} description={guidance.teamDescription}>
         {guidance.canInvite && <Link className="buttonlike forest" href={guidance.teamHref}>{guidance.teamLabel} →</Link>}
       </EmptyState>}
       {!milestones.length && <Notice>This version has no milestones. {role === "client" ? "Create a new version with at least one milestone before delivery." : "Ask the client to add milestones in a new version."}</Notice>}
@@ -180,12 +180,11 @@ export function AgreementPage({ id, embedded = false, draftRequest, primaryDraft
                   ? "A freelancer must join before either party accepts."
                   : own
                     ? "You accepted this version."
-                    : "Read every milestone before accepting."}{" "}
-              Acceptance does not authorize a payment.
+                    : "Read every milestone before accepting."}
             </p>
           </section>
-          <section className="card">
-            <h2>Version history</h2>
+          <details className="card">
+            <summary>Version history ({versions.length})</summary>
             {versions.map((v) => (
               <Link
                 key={v.id}
@@ -203,7 +202,7 @@ export function AgreementPage({ id, embedded = false, draftRequest, primaryDraft
                 </span>
               </Link>
             ))}
-          </section>
+          </details>
         </aside>
       </div>
       {editing && (

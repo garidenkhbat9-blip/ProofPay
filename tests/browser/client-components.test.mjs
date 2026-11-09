@@ -196,6 +196,7 @@ test('client workspace components: desktop/mobile tour, actions and responsive l
           await waitFor(`!!button('Analyze evidence')`);
           assert.equal(await evaluate('aiCalls'),0);
           assert(await evaluate(`document.querySelector('.ai-consent').textContent.includes('Gemini')`));
+          assert.equal(await evaluate(`document.querySelectorAll('.ai-finding').length`),0,'Unrun AI checks must not repeat the requirements as empty findings');
           if(name!=='ai-empty') {
             await evaluate(`button('Analyze evidence').click(); button('Analyze evidence')?.click()`);
             if(name==='ai-loading') {
@@ -220,6 +221,9 @@ test('client workspace components: desktop/mobile tour, actions and responsive l
                 await evaluate(`data.submissions.push({...data.submissions[0],id:'s2',revision:2});rerender()`);
                 await waitFor(`document.querySelectorAll('.ai-review').length===2`);
                 assert(await evaluate(`document.querySelector('#revision-1 .ai-summary').textContent.includes('Historical analysis') && !document.querySelector('#revision-2 .ai-summary a')`));
+                assert(await evaluate(`!document.querySelector('#revision-1').closest('details').open && document.querySelector('#revision-2').closest('details').open`),'Show the latest revision and keep older evidence accessible in history');
+                await evaluate(`document.querySelector('#revision-1').closest('details').querySelector('summary').click()`);
+                assert(await evaluate(`document.querySelector('#revision-1').getBoundingClientRect().height > 0`),'Historical evidence can still be opened');
                 await evaluate(`workspace.user={...workspace.user,id:'worker'};workspace.perspective='client';rerender()`);
                 await waitFor(`!document.querySelector('.ai-review')`);
               }
@@ -289,6 +293,12 @@ test('client workspace components: desktop/mobile tour, actions and responsive l
       }
       if(name.startsWith('waiting-')) {
         await waitFor(`!!document.querySelector('.waiting-workspace')`);
+        assert(await evaluate(`!document.querySelector('.waiting-steps').open`), 'Repeated timeline details stay collapsed by default');
+        await evaluate(`document.querySelector('.waiting-steps summary').focus()`);
+        await send('Emulation.setFocusEmulationEnabled',{enabled:true});
+        await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});
+        await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+        await waitFor(`document.querySelector('.waiting-steps').open`);
         assert(await evaluate(`![...document.querySelectorAll('button')].some(b=>/send reminder|request update|cancel contract|reassign/i.test(b.textContent))`));
         await evaluate(`document.querySelector('.waiting-resolve summary').focus()`);
         await send('Emulation.setFocusEmulationEnabled',{enabled:true});
@@ -354,7 +364,8 @@ test('client workspace components: desktop/mobile tour, actions and responsive l
       }
       if (name.startsWith('notifications')) {
         await waitFor(`document.querySelector('.invitation-count')?.textContent === '2'`);
-        assert(await evaluate(`document.querySelector('.invitation-summary').textContent.includes('2 pending project invitations')`));
+        assert(await evaluate(`document.querySelector(role === 'client' ? '.invitation-summary' : '.fw-focus').textContent.includes('2 pending project invitations')`));
+        assert(await evaluate(`role === 'client' || !document.querySelector('.invitation-summary')`),'The invitation action appears once when it is the dashboard focus');
         assert.equal(await evaluate(`document.querySelector('.invitation-count').closest('a').getAttribute('href')`), '/invitations');
         await evaluate(`data.invitations.find(i=>i.id==='incoming-0').status='accepted'; rerender()`);
         await waitFor(`document.querySelector('.invitation-count')?.textContent === '1'`);

@@ -117,9 +117,6 @@ export function DeliveryPage({ id, embedded = false }: { id: string; embedded?: 
           );
         })}
       </div>
-      <p className="subtle sectionspace">
-        Approval records acceptance. Payment is a separate step.
-      </p>
       {create && (
         <CreateLink milestone={create} workspaceId={embedded ? id : undefined} onClose={() => setCreate(null)} />
       )}
@@ -204,7 +201,6 @@ export function ReviewsPage() {
     <>
       <Heading
         title={perspective === "client" ? "Review inbox" : "My submissions"}
-        subtitle="Evidence and decisions, in one place."
       />
       <div className={list.length ? "delivery-list" : undefined}>
         {list.map((s) => (
@@ -333,9 +329,10 @@ export function HandoffPage({ id, embedded = false }: { id: string; embedded?: b
           )}
           {history
             .filter((s) => s.status !== "uploading")
-            .map((s) => (
+            .map((s, index) => (
+              <details className={index > 0 || canSubmit ? "delivery-panel" : "current-delivery"} key={s.id} open={index === 0 && !canSubmit}>
+                <summary hidden={index === 0 && !canSubmit}>Revision {s.revision} · {deliveryStatus(s)}</summary>
               <EvidencePanel
-                key={s.id}
                 submission={s}
                 criteria={criteria}
                 canReview={
@@ -345,6 +342,7 @@ export function HandoffPage({ id, embedded = false }: { id: string; embedded?: b
                   reviewable(data, link)
                 }
               />
+              </details>
             ))}
         </section>
         <aside>
@@ -355,17 +353,11 @@ export function HandoffPage({ id, embedded = false }: { id: string; embedded?: b
               <dd className="delivery-amount">{money(m.amount)}</dd>
               <dt>Due date</dt>
               <dd>{m.due_date}</dd>
-              <dt>Verification</dt>
-              <dd>Human review</dd>
               <dt>Payment</dt>
-              <dd><Link href={"/payments#payment-" + m.id}>View Sandbox payment status</Link></dd>
+              <dd><Link href={"/payments#payment-" + m.id}>View payment status</Link></dd>
             </dl>
           </div>
           {role === "client" && current && <ShareLink link={link} />}
-          <p className="subtle">
-            Each revision is kept with its evidence and review. Approval does
-            not send money.
-          </p>
         </aside>
       </div>
     </>
@@ -381,8 +373,8 @@ function ShareLink({ link }: { link: SubmissionLink }) {
       : window.location.origin + "/handoff/" + link.id;
   return (
     <>
-      <div className="delivery-panel">
-        <h3>Submission link</h3>
+      <details className="delivery-panel">
+        <summary>Manage submission link</summary>
         <p className="subtle">For the assigned freelancer. Sign-in required.</p>
         <input
           className="field share-link"
@@ -410,7 +402,7 @@ function ShareLink({ link }: { link: SubmissionLink }) {
         <p className="subtle">
           Expires {new Date(link.expires_at).toLocaleDateString()}
         </p>
-      </div>
+      </details>
       {revoke && (
         <Modal title="Revoke submission link?" onClose={() => setRevoke(false)}>
           <p className="dialogintro">
@@ -571,8 +563,7 @@ function SubmitEvidence({
         disabled={task.busy || confirming}
       />
       <p className="subtle">
-        We check that evidence was received. The client reviews whether it meets
-        the requirements.
+        Submitted evidence is saved as a revision for the client to review.
       </p>
       <FormMessage error={task.error} />
       {confirming && task.error && (
@@ -668,17 +659,15 @@ function EvidencePanel({
           <strong>Client feedback:</strong> {review.note}
         </p>
       )}
-      <section
+      <details
         className="verification-unavailable"
         aria-label="Verification status"
       >
-        <strong>CANNOT_VERIFY · Website checks not connected</strong>
+        <summary>Verification details</summary>
         <p>
-          No automated website or functional checks have run for this revision. The
-          client must inspect the submitted evidence against each requirement
-          before making a decision.
+          Automated website checks are not connected. The client reviews the submitted work.
         </p>
-      </section>
+      </details>
       {canReview && <ReviewForm submission={s} criteria={criteria} />}
     </article>
   );

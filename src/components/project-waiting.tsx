@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import type { projectWaiting } from "@/lib/project-waiting";
 import "@/app/project-waiting.css";
 
@@ -10,6 +11,15 @@ export function ProjectWaiting({
   model: NonNullable<ReturnType<typeof projectWaiting>>;
   stale?: boolean;
 }) {
+  const steps = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const reveal = () => {
+      if (window.location.hash === "#project-waiting" && steps.current) steps.current.open = true;
+    };
+    reveal();
+    window.addEventListener("hashchange", reveal);
+    return () => window.removeEventListener("hashchange", reveal);
+  }, [model]);
   if (model.archived || model.unavailable) return null;
   const date = (value: string) =>
     new Date(value).toLocaleString("en-GB", {
@@ -22,25 +32,16 @@ export function ProjectWaiting({
       className="waiting-workspace"
       id="project-waiting"
       tabIndex={-1}
-      aria-labelledby="waiting-heading"
+      aria-label="Project timeline and help"
     >
-      <header>
-        <div>
-          <span className="waiting-eyebrow">Working together</span>
-          <h2 id="waiting-heading">Waiting & next steps</h2>
-        </div>
-        <span>
-          {model.items.length
-            ? `${model.items.length} open step${model.items.length === 1 ? "" : "s"}`
-            : "No outstanding steps"}
-        </span>
-      </header>
       {stale && (
         <p role="status">
           Last known records. Reconnect or refresh before acting; the other
           participant may already have responded.
         </p>
       )}
+      {!!model.items.length && <details className="waiting-steps" ref={steps}>
+      <summary>Timeline & next steps ({model.items.length})</summary>
       <div className="waiting-rows">
         {model.items.map((item) => (
           <article
@@ -76,25 +77,19 @@ export function ProjectWaiting({
           </article>
         ))}
       </div>
+      </details>}
       {!!model.items.length && (
         <details className="waiting-resolve">
           <summary>
-            Resolve delay <span>Available options & limits</span>
+            Need help with a delay?
           </summary>
           <div className="waiting-recovery-grid">
             <div>
               <h3>Request an update</h3>
               <p>{model.reminders.message}</p>
               <p>
-                Ask for an update through a contact channel you already share.
-                Keep a copy; messages sent elsewhere are not recorded here.
+                Contact the other participant through your shared channel and keep a copy.
               </p>
-              {model.items.some((i) => i.kind === "review") && (
-                <p>
-                  The submission and its received timestamp remain available.
-                  Waiting never approves work or creates an invoice.
-                </p>
-              )}
               <p>
                 If there is no response, preserve the records and refer to your
                 agreement’s escalation terms. ProofPay has no active dispute or
@@ -110,12 +105,10 @@ export function ProjectWaiting({
               {model.canManageInvitation ? (
                 <>
                   <p>
-                    Review the invitation in Set up. The client can revoke a
-                    pending invitation or invite again through the existing
-                    checked flow. This does not cancel an accepted contract.
+                    You can revoke a pending invitation or invite again. An accepted contract cannot be cancelled here.
                   </p>
                   <Link href={model.setupHref}>
-                    Manage invitation in Set up ↗
+                    Manage invitation ↗
                   </Link>
                 </>
               ) : (
@@ -178,10 +171,6 @@ export function ProjectWaiting({
             </li>
           ))}
         </ol>
-        <p>
-          Only saved invitation, agreement, submission and decision records are
-          shown. No reminder has been dispatched from this panel.
-        </p>
       </details>
     </section>
   );

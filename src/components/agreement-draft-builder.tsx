@@ -77,11 +77,7 @@ export function AgreementDraftBuilder({
     <section className="agreement-ai" aria-label="AI agreement draft">
       <div className="sectionhead">
         <div>
-          <h3>Draft measurable requirements</h3>
-          <p>
-            Generate one website milestone from your brief, then review every
-            requirement.
-          </p>
+          <h3>Draft with AI</h3>
         </div>
         <button
           type="button"
@@ -96,9 +92,7 @@ export function AgreementDraftBuilder({
         </button>
       </div>
       <p className="fieldhelp">
-        This sends your project brief and current scope to Google Gemini. Your
-        amount and due date stay unchanged. AI output is a draft, not
-        verification or approval.
+        Sends your brief and scope to Gemini for a website milestone suggestion. Review it before saving; amount and due date stay unchanged.
       </p>
       <FormMessage error={task.error} />
       <p className="agreement-ai-status" role="status">

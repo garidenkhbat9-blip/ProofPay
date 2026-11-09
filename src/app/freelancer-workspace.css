@@ -78,9 +78,11 @@
   color: var(--muted);
 }
 .freelancer-workspace .fw-focus {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 205px;
-  gap: 26px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
   margin-bottom: 26px;
   padding: 28px;
   background: #fff;
@@ -88,6 +90,12 @@
   border-left: 4px solid #a48b4f;
   border-radius: 14px;
   box-shadow: 0 6px 22px #183e3008;
+}
+.freelancer-workspace .fw-focus .fw-focus-deadline {
+  font-size: 12px;
+  padding: 6px 10px;
+  background: #f5f5ec;
+  border-radius: 6px;
 }
 .freelancer-workspace .fw-focus h2 {
   font-size: clamp(23px, 2.4vw, 30px);

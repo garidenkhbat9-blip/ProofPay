@@ -116,11 +116,9 @@ export function EvidenceAiReview({
     <section className="ai-review" aria-label="AI Review Center">
       <header className="ai-review-heading">
         <div>
-          <span className="ai-kicker">ProofPay / Evidence intelligence</span>
-          <h2>AI Review Center</h2>
+          <h2>Review submission</h2>
           <p>
-            Agreement v{agreementVersion} / Revision {submission.revision} /
-            Advisory only
+            Agreement v{agreementVersion} · Revision {submission.revision}
           </p>
           <p className="ai-submitted">
             Submitted{" "}
@@ -134,7 +132,7 @@ export function EvidenceAiReview({
       </header>
       <div className="ai-summary" aria-live="polite" aria-busy={busy}>
         <div>
-          <span className="ai-kicker">AI Review Summary</span>
+          <span className="ai-kicker">Optional AI text check</span>
           <h3>
             {busy
               ? "Reading the submitted text…"
@@ -145,13 +143,13 @@ export function EvidenceAiReview({
                     ? `${inspected} of ${criteria.length} requirements assessed`
                     : "Historical analysis"
                   : canAnalyze
-                    ? "A clearer view of the evidence"
+                    ? "Check text against requirements"
                     : "Review record"}
           </h3>
           <p>
-            {busy ? "Checking the available text against each requirement. No approval or payment action will be taken." : report
+            {busy ? "Checking the submitted text. You can continue reviewing below." : report
               ? report.summary
-              : "Compare the agreed requirements with the submitted text. Inspect visual work and linked content personally."}
+              : "AI suggests findings. You make the decision."}
           </p>
           {report && !canAnalyze && (
             <p>
@@ -187,14 +185,11 @@ export function EvidenceAiReview({
           Gemini. Images, PDFs, HTML and external links are not inspected.
         </p>
       )}
-      <div className="ai-desk">
-        <section
+        <details
           className="ai-requirements"
           aria-label="Agreement requirements"
         >
-          <h3>
-            <span>01</span> Agreement requirements
-          </h3>
+          <summary>Agreement requirements ({criteria.length})</summary>
           <ol>
             {criteria.map((c) => {
               const o = report?.observations.find(
@@ -202,23 +197,21 @@ export function EvidenceAiReview({
               );
               return (
                 <li key={c.id}>
-                  <a href={`#finding-${submission.id}-${c.id}`}>
-                    {c.description}
-                  </a>
-                  <small className={`ai-status ${o?.status || "NOT_CHECKED"}`}>
-                    {o ? findingLabels[o.status] : "Not checked"}
-                  </small>
+                  {o ? <a href={`#finding-${submission.id}-${c.id}`}>{c.description}</a> : c.description}
+                  {o && <small className={`ai-status ${o.status}`}>{findingLabels[o.status]}</small>}
                 </li>
               );
             })}
           </ol>
-        </section>
+        </details>
+      <div className="ai-desk">
         <section className="ai-evidence" aria-label="Submitted evidence">
           <h3>
-            <span>02</span> Submitted evidence
+            Submitted evidence
           </h3>
           {evidence}
-          <div className="ai-inspection-ledger">
+          <details className="ai-inspection-ledger">
+            <summary>AI inspection details</summary>
             {submission.notes && (
               <p>
                 <strong>Submission notes</strong>
@@ -245,7 +238,7 @@ export function EvidenceAiReview({
               </p>
             ))}
             {!artifacts.length && <p>No uploaded files or links.</p>}
-          </div>
+          </details>
         </section>
         <section
           className="ai-findings"
@@ -254,7 +247,7 @@ export function EvidenceAiReview({
           aria-label="AI findings and human decision"
         >
           <h3>
-            <span>03</span> Findings & decision
+            {report ? "Findings & decision" : "Review & decide"}
           </h3>
           {!report && (
             <p className="ai-muted">
@@ -263,7 +256,7 @@ export function EvidenceAiReview({
                 : "No AI findings yet. You can review and decide without AI."}
             </p>
           )}
-          {criteria.map((c) => {
+          {report && criteria.map((c) => {
             const o = report?.observations.find((o) => o.criterionId === c.id);
             return (
               <article

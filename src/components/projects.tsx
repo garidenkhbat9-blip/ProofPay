@@ -85,7 +85,6 @@ function ClientProjectsPage() {
     <>
       <Heading
         title={perspective === "client" ? "Projects" : "My jobs"}
-        subtitle="Every agreement, deliverable and decision."
       >
         {perspective === "client" && (
           <Link className="buttonlike forest" href="/projects/new">
@@ -151,7 +150,7 @@ export function NewProject() {
   }
   return (
     <>
-      <Heading title="New project" subtitle="Start with a clear brief." />
+      <Heading title="New project" />
       {perspective !== "client" ? (
         <Empty>Switch to Client view to create a project.</Empty>
       ) : (
@@ -237,11 +236,11 @@ export function ProjectOverview({ id }: { id: string }) {
   const history = invitations.filter(i => invitationStatus(i) !== "pending");
   return <>
     <ProjectWorkspace id={id} onInvite={() => setInvite(true)} setup={
-      <section className="pw-team" id="project-team">
-        <h2>Team & invitation</h2>
-        {role === "client" ? data.invitationError ? <p>Invitation records unavailable.</p> : <>{pending.length > 0 && <InvitationList items={pending} incoming={false} showProject={false} />}{history.length > 0 && <details><summary>Previous invitations ({history.length})</summary><InvitationList items={history} incoming={false} showProject={false} /></details>}{!invitations.length && <p>No invitation sent.</p>}</> : <p>Your project membership is confirmed.</p>}
+      role === "client" && (data.invitationError || invitations.length > 0) ? <section className="pw-team" id="project-team">
+        {(data.invitationError || pending.length > 0) && <h2>Invitation</h2>}
+        {data.invitationError ? <p>Invitation records unavailable.</p> : <>{pending.length > 0 && <InvitationList items={pending} incoming={false} showProject={false} />}{history.length > 0 && <details><summary>Previous invitations ({history.length})</summary><InvitationList items={history} incoming={false} showProject={false} /></details>}</>}
         {role === "client" && !hasFreelancer && p.status !== "archived" && data.invitations.some(i => i.project_id === id && invitationStatus(i) === "pending") && <button onClick={() => setInvite(true)}>Manage invitation recipient</button>}
-      </section>
+      </section> : null
     } />
     {invite && <InviteForm project={p} onClose={() => setInvite(false)} />}
   </>;

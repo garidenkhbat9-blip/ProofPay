@@ -63,11 +63,6 @@ export function FreelancerOverview({
         <div>
           <span className="fw-eyebrow">Freelancer workspace</span>
           <h1>{name ? `Your work, ${name}.` : "Your work, in focus."}</h1>
-          <p>
-            {model.active.length
-              ? `${model.active.length} active job${model.active.length === 1 ? "" : "s"}. One clear next step.`
-              : "A clear place for your next collaboration."}
-          </p>
         </div>
         <span className="fw-brand-mark" aria-hidden="true">
           <Icon name="compass" />
@@ -75,7 +70,7 @@ export function FreelancerOverview({
       </header>
       <DashboardTour />
       <WorkspaceFeedback />
-      <InvitationNotice />
+      {!inviteFirst && <InvitationNotice />}
       {otherRole && (
         <Notice>
           Your client projects are in your other view.{" "}
@@ -104,7 +99,7 @@ export function FreelancerOverview({
           <div key={label}>
             <span>{label}</span>
             <strong>{count ?? "—"}</strong>
-            <small>{count === null ? "Status unavailable" : detail}</small>
+            {(count === null || (label === "Pending invitations" && invitations.stale)) && <small>{count === null ? "Status unavailable" : detail}</small>}
           </div>
         ))}
       </section>
@@ -114,16 +109,13 @@ export function FreelancerOverview({
             {inviteFirst || next?.priority
               ? "Your next action"
               : next
-                ? "Waiting, with clarity"
+                ? "Current status"
                 : "Ready for your next job"}
           </span>
           {inviteFirst ? (
             <>
-              <h2 id="fw-focus-title">A new collaboration starts here.</h2>
-              <p>
-                Review the project invitation before joining; agreement
-                acceptance is a separate step.
-              </p>
+              <h2 id="fw-focus-title">{invitations.count} pending project invitation{invitations.count === 1 ? "" : "s"}</h2>
+              {invitations.stale && <p>Last known status. Refresh to check for updates.</p>}
               <Link className="buttonlike fw-primary" href="/invitations">
                 Review invitations <span aria-hidden="true">→</span>
               </Link>
@@ -141,14 +133,14 @@ export function FreelancerOverview({
                 {next.delivery
                   ? `${next.delivery.milestone.title} is ready for your ${next.delivery.submission?.status === "changes" ? "revision" : "delivery"}.`
                   : next.step?.stage === 1
-                    ? "Both parties must accept the same agreement version before delivery."
+                    ? "Review the scope and milestones before accepting."
                     : next.actor === "Client's action"
-                      ? "Your client has the next step; open the job to check the latest records."
+                      ? "Your client has the next step."
                       : next.paymentAttention
-                        ? "Approval is recorded; check the separate invoice and verified payment status."
+                        ? "Check the invoice and payment status."
                         : next.unavailable
                           ? "Refresh your workspace to check the current job state."
-                          : "Your agreements, evidence and payment records remain available."}
+                          : "View the job for details."}
               </p>
               <Link className="buttonlike fw-primary" href={next.href}>
                 {next.label}
@@ -157,7 +149,7 @@ export function FreelancerOverview({
             </>
           ) : (
             <>
-              <h2 id="fw-focus-title">Good work starts with an invitation.</h2>
+              <h2 id="fw-focus-title">{model.jobs.length ? "No active jobs" : "Join your first project"}</h2>
               <p>
                 {model.jobs.length
                   ? "Your archived job records are retained below."
@@ -169,18 +161,7 @@ export function FreelancerOverview({
             </>
           )}
         </div>
-        <aside className="fw-focus-aside">
-          <Icon name={inviteFirst || next?.priority ? "briefcase" : "clock"} />
-          <strong>
-            {inviteFirst ? "Your decision" : next?.actor || "No action waiting"}
-          </strong>
-          <span>
-            {next?.deadline && !inviteFirst
-              ? next.deadline
-              : "Clear scope. Evidence-backed work."}
-          </span>
-          <small>Approval does not confirm payment.</small>
-        </aside>
+        {next?.deadline && !inviteFirst && <p className="fw-focus-deadline">{next.deadline}</p>}
       </section>
       <section className="fw-jobs" aria-labelledby="fw-jobs-title">
         <div className="fw-section-head">
@@ -216,10 +197,7 @@ export function FreelancerJobRows({ jobs }: { jobs: FreelancerJob[] }) {
         <Icon name="folder" />
         <div>
           <h3>No jobs here yet.</h3>
-          <p>
-            Accepted invitations appear here; use Invitations to review incoming
-            work.
-          </p>
+          <p>Jobs appear here after you accept an invitation.</p>
         </div>
       </div>
     );
@@ -331,7 +309,6 @@ export function MyJobsPage() {
         <div>
           <span className="fw-eyebrow">Freelancer workspace</span>
           <h1>My jobs</h1>
-          <p>Your commitments, and whose turn it is.</p>
         </div>
         <button disabled={loading} onClick={() => void refresh()}>
           {loading ? "Refreshing…" : "Refresh"}

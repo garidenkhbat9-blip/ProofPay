@@ -14,7 +14,7 @@ import "@/app/client-overview.css";
 
 export function ClientOverview({ projectIds = [] }: { projectIds?: string[] }) {
   const { data, user, refresh, loading, setPerspective } = useWorkspace();
-  const { rows, active, next, metrics, aiReview } = clientOverview(data, user?.id);
+  const { rows, next, metrics } = clientOverview(data, user?.id);
   const { displayName } = workspaceIdentity(user, data.profiles);
   const firstName = displayName === "Your account" ? "" : displayName.split(" ")[0];
   const otherProjects = data.members.some(m => m.user_id === user?.id && m.role === "freelancer" && data.projects.some(p => p.id === m.project_id));
@@ -36,29 +36,27 @@ export function ClientOverview({ projectIds = [] }: { projectIds?: string[] }) {
         {next?.step ? <>
           <Link className="co-focus-project" href={`/projects/${next.project.id}`}>{next.project.title}</Link>
           <h2 id="co-focus-title">{next.step.stage === 3 ? "Review submitted work" : overviewStatus(next.step)}</h2>
-          <p>{next.step.stage === 3 ? "Review the evidence against your agreement before recording a decision." : next.step.stage === 5 ? "Work approval and verified payment are separate records." : next.step.stage === 1 ? "Both parties must accept the same agreement version before delivery." : next.step.attention ? next.step.title : next.step.actor === "Freelancer" ? "The next step is with your freelancer." : next.step.description}</p>
+          {next.step.actor === "Freelancer" && <p>The next step is with your freelancer.</p>}
           <Link className="buttonlike co-focus-action" href={next.step.href}>{next.step.stage === 3 ? "Review evidence" : next.step.label}<span aria-hidden="true">↗</span></Link>
         </> : <>
-          <h2 id="co-focus-title">{rows.length ? "A clear view. Room for what's next." : "Good work starts with a clear brief."}</h2>
-          <p>{rows.length ? "Your archived projects are retained below; reopen an eligible draft or start a new project." : "Create a project, agree on milestones, and review the work with confidence."}</p>
+          <h2 id="co-focus-title">{rows.length ? "No active projects" : "Create your first project"}</h2>
+          <p>{rows.length ? "Your archived projects are listed below." : "Start with a brief and invite your freelancer."}</p>
         </>}
       </div>
-      <div className="co-focus-note"><Icon name="shield" /><strong>Work, with proof.</strong><span>Agreement → Evidence → Decision</span><small>Approval is not payment.</small></div>
     </section>
 
     <section className="co-activity" aria-label="Project activity">
       {([
-        ["Active projects", metrics.active, "Includes open drafts"],
-        ["Awaiting review", metrics.review, "Projects with submitted work"],
-        ["Awaiting response", metrics.response, "Next step with freelancer"],
-        ["Payment attention", metrics.payment, "Approved work to check"],
-      ] as const).map(([label, count, detail]) => <div className="co-metric" key={label}><span>{label}</span><strong>{count ?? "—"}</strong><small>{count === null ? "Status unavailable" : detail}</small></div>)}
+        ["Active projects", metrics.active],
+        ["Awaiting review", metrics.review],
+        ["Awaiting freelancer", metrics.response],
+        ["Payments to check", metrics.payment],
+      ] as const).map(([label, count]) => <div className="co-metric" key={label}><span>{label}</span><strong>{count ?? "—"}</strong>{count === null && <small>Status unavailable</small>}</div>)}
     </section>
 
-    {aiReview?.step && aiReview.step.href !== next?.step?.href && <aside className="co-ai" aria-label="AI review opportunity"><span className="co-ai-mark" aria-hidden="true">✧</span><div><strong>AI-assisted evidence review</strong><p>Explore submitted text with Gemini; the decision stays with you.</p></div><Link href={aiReview.step.href}>Open evidence assistant <span aria-hidden="true">↗</span></Link></aside>}
 
     <section className="co-projects" aria-labelledby="co-projects-title">
-      <div className="co-section-head"><div><h2 id="co-projects-title">Your projects <span>{rows.length}</span></h2><p>{active.length ? "The work in motion, and what comes next." : rows.length ? "Your retained project records." : "Your first project will appear here."}</p></div><button className="ghost" disabled={loading} onClick={() => void refresh()}>{loading ? "Refreshing…" : "Refresh"}</button></div>
+      <div className="co-section-head"><h2 id="co-projects-title">Your projects <span>{rows.length}</span></h2><button className="ghost" disabled={loading} onClick={() => void refresh()}>{loading ? "Refreshing…" : "Refresh"}</button></div>
       {rows.length ? <div className="co-project-list">{rows.map(({ project, step }) => {
         const team = projectTeam(data, project.id);
         const archived = project.status === "archived";
@@ -68,8 +66,7 @@ export function ClientOverview({ projectIds = [] }: { projectIds?: string[] }) {
           <div className="co-budget"><small>Planned budget</small><strong>{new Intl.NumberFormat("en-US", { style: "currency", currency: project.currency }).format(Number(project.budget_amount))}</strong></div>
           <ProjectActions project={project} />
         </article>;
-      })}</div> : <div className="co-empty"><Icon name="folder" /><h3>From brief to approved work.</h3><p>Start with the New project button above.</p><ol><li><span>01</span>Set the brief</li><li><span>02</span>Agree on milestones</li><li><span>03</span>Review the evidence</li></ol></div>}
-      {rows.length > 0 && <p className="co-financial-note">Planned budgets are estimates, not funds held or payments collected.</p>}
+      })}</div> : <div className="co-empty"><p>No projects yet.</p></div>}
     </section>
     {next?.step && <details className="co-details"><summary>Workflow details</summary><p>{next.step.description}</p>{next.step.blocker && <p>{next.step.blocker}</p>}<p>Next: {next.step.actor}</p></details>}
     <JudgeWorkspace projectIds={projectIds} />

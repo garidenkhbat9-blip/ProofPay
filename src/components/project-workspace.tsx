@@ -83,7 +83,6 @@ export function ProjectWorkspace({
     <div className="project-workspace">
       <header className="pw-header">
         <div>
-          <span className="pw-eyebrow">Project workspace · {model.role}</span>
           <h1>{project.title}</h1>
           <p className="pw-participants">
             <span>Client: {model.participants("client")}</span>
@@ -106,7 +105,7 @@ export function ProjectWorkspace({
             </p>
           )}
           <p>Next: {primary.actor}</p>
-          {waiting?.focus && <p className="pw-waiting-context">{waiting.focus.since ? `${waiting.focus.sinceLabel} ${new Date(waiting.focus.since).toLocaleDateString("en-GB",{timeZone:"UTC"})} (UTC)` : "Waiting start not recorded"} · {waiting.focus.dateNote}</p>}
+          {waiting?.focus?.attention && <p className="pw-waiting-context">{waiting.focus.dateNote}</p>}
         </div>
         {model.unavailable ? (
           <button onClick={() => void refresh()}>Refresh status</button>
@@ -126,7 +125,7 @@ export function ProjectWorkspace({
         ) : null}
       </section>
       <ProjectPhaseNavigation id={id} selected={selected} />
-      <div className="pw-summary" aria-label="Current agreement progress">
+      {!!rows.length && <div className="pw-summary" aria-label="Current agreement progress">
         <span>{rows.length} milestone{rows.length === 1 ? "" : "s"}</span>
         <span>{model.unavailable ? "—" : model.submitted} in review</span>
         <span>{model.unavailable ? "—" : model.approved} approved</span>
@@ -134,7 +133,7 @@ export function ProjectWorkspace({
           {model.unavailable || data.paymentError ? "—" : model.paid} payment
           verified
         </span>
-      </div>
+      </div>}
       {model.unavailable && (
         <Notice>
           Some project records are unavailable. Refresh before taking action.
@@ -174,10 +173,6 @@ export function ProjectWorkspace({
               <p>Planned budget is not funds held or payment collected.</p>
             </details>
             {setup}
-            <div className="pw-section-title">
-              <h2>Agreement & milestones</h2>
-              {model.agreement && <span>Latest: v{model.agreement.version}</span>}
-            </div>
             <AgreementPage id={id} embedded draftRequest={draftRequest} primaryDraftElsewhere={draftHere} />
           </>
         )}
@@ -187,13 +182,8 @@ export function ProjectWorkspace({
               <h2>
                 {selected === "deliver"
                   ? "Deliver work"
-                  : "Evidence & human review"}
+                  : "Review work"}
               </h2>
-              <span>
-                {selected === "review"
-                  ? "AI is advisory only"
-                  : "Current agreement milestones"}
-              </span>
             </div>
             {requestedLink ? (
               handoff ? (
@@ -218,10 +208,6 @@ export function ProjectWorkspace({
               <DeliveryPage id={id} embedded />
             ) : (
               <>
-                <p className="pw-context">
-                  Review the evidence against the agreement; AI observations
-                  never approve work or authorize payment.
-                </p>
                 <div className="pw-milestones">
                   {rows.map((row) => (
                     <article key={row.milestone.id}>
@@ -267,14 +253,9 @@ export function ProjectWorkspace({
         {selected === "payment" && (
           <>
             <div className="pw-section-title">
-              <h2>Approval & payment</h2>
+              <h2>Payments</h2>
               <span>PayPal Sandbox</span>
             </div>
-            <Notice>
-              Approval records acceptance of work, not payment. Only verified
-              provider records confirm payment; zero-value approved milestones
-              require none.
-            </Notice>
             {data.paymentError && <Notice>{data.paymentError}</Notice>}
             <div className="pw-milestones">
               {rows.map((row) => (
@@ -296,29 +277,20 @@ export function ProjectWorkspace({
                 </article>
               ))}
             </div>
-            <p className="pw-context">
-              Invoice preparation, authorized Sandbox checkout and payment
-              history remain in Payments.
-            </p>
             <Link
               className="buttonlike forest"
               href="/payments"
               onClick={() => setPerspective(model.role)}
             >
-              Open invoices & payment history →
+              View invoices →
             </Link>
           </>
         )}
       </section>
       {waiting && <ProjectWaiting model={waiting} stale={!!error} />}
       <details className="pw-history">
-        <summary>Agreement history & workflow details</summary>
-        <p>{model.phases.find((p) => p.id === selected)?.detail}</p>
-        <p>
-          Both participants must accept the latest agreement version before
-          delivery. Previous acceptances do not carry over to a new version.
-        </p>
-        {historical.map((a) => (
+        <summary>Project records</summary>
+        {selected !== "setup" && historical.map((a) => (
           <Link
             key={a.id}
             href={`/projects/${id}/agreement?version=${encodeURIComponent(a.id)}`}
