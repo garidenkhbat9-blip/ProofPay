@@ -3,12 +3,9 @@ import Link from "next/link";
 import { useWorkspace } from "./provider";
 import { judgeProjects, judgeProgress } from "@/lib/judge-access";
 
-// Keep designation/membership checks and recorded progress in the dashboard.
-// Payment history uses the existing Payments workspace.
 export function JudgeWorkspace({ projectIds }: { projectIds: string[] }) {
   const { data, user, perspective, error } = useWorkspace();
   const projects = judgeProjects(data, projectIds, user?.id, perspective);
-  // Configuration is optional; ordinary accounts do not need judge setup.
   if (!projectIds.length || !projects.length || error) return null;
   return <details className="workflow-help">
     <summary>Prepared Sandbox projects</summary>

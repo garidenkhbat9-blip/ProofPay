@@ -1,4 +1,3 @@
-// This workflow is entirely local. It must never call auth, RPCs, uploads or payments.
 export const demoStages = [
   { title: "Create project", actor: "Client" },
   { title: "AI agreement", actor: "Both parties" },

@@ -11,7 +11,6 @@ export interface GeminiDiagnostic {
 export class GeminiError extends ApiError {
   constructor(status: number, message: string, public readonly diagnostic: GeminiDiagnostic) { super(status, message); }
 }
-/** Server callers supply configuration; no credentials are bundled here. */
 export async function generateStructured<T>(options: {
   key?: string; model?: string; system: string; brief: string; schema: unknown;
   parse: (value: unknown) => T; signal: AbortSignal; maxOutputTokens?: number;
@@ -51,15 +50,13 @@ export async function generateStructured<T>(options: {
     });
   } catch (error) { throw unavailable("headers", error); }
   if (!response.ok) {
-    // Whitelist provider enums only. Never expose raw message/details, prompts,
-    // response text, URLs, credentials or quota project identifiers.
     let providerStatus: string | undefined;
     let providerReason: string | undefined;
     try {
       const error = await readJsonBounded(response, 16000) as {error?: {status?: string; details?: {reason?: string}[]}};
       if (["RESOURCE_EXHAUSTED", "INVALID_ARGUMENT", "PERMISSION_DENIED", "NOT_FOUND", "UNAVAILABLE", "INTERNAL", "UNAUTHENTICATED", "DEADLINE_EXCEEDED"].includes(error?.error?.status || "")) providerStatus = error.error!.status;
       if (Array.isArray(error?.error?.details)) providerReason = error.error.details.find(d => ["API_KEY_INVALID", "API_KEY_EXPIRED", "API_KEY_SERVICE_BLOCKED", "API_KEY_HTTP_REFERRER_BLOCKED", "API_KEY_IP_ADDRESS_BLOCKED", "SERVICE_DISABLED"].includes(d?.reason || ""))?.reason;
-    } catch { /* The HTTP status remains authoritative even if diagnostics fail. */ }
+    } catch {   }
     const retry = Number(response.headers.get("retry-after"));
     throw new GeminiError(response.status === 429 ? 429 : 503,
       providerReason === "API_KEY_INVALID" || providerReason === "API_KEY_EXPIRED" ? "Gemini rejected the server API key. Ask the administrator to update GEMINI_API_KEY and redeploy."

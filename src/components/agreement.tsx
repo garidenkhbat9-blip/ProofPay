@@ -233,7 +233,6 @@ function AgreementEditor({
   const { data, refresh, notice } = useWorkspace(),
     task = useTask(),
     router = useRouter();
-  // Keep the draft's base version fixed if a background refresh finds a new one.
   const [latest] = useState(initialLatest);
   const [scope, setScope] = useState(latest?.scope || project.description),
     [note, setNote] = useState("");

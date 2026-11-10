@@ -1,5 +1,3 @@
-// Starts exactly one local production server, performs unauthenticated checks,
-// then stops only the process started here. No provider or database writes.
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { createServer } from 'node:net';

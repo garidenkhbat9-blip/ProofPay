@@ -1,17 +1,9 @@
--- ProofPay AI | 001: Auth profiles, projects, membership and invitations
--- Run ONCE in Supabase SQL Editor as postgres, on a fresh ProofPay schema.
--- If these tables/functions already exist, STOP and reconcile migrations first.
--- This script does not drop existing tables. A conflict rolls back the transaction.
--- Scope: one client + at most one freelancer per project (MVP).
--- No email is sent by this SQL. The app must deliver notifications separately.
--- No AI, verification, invoice or payment integration is enabled by this migration.
 
 begin;
 
 create schema if not exists proofpay_private;
 revoke all on schema proofpay_private from public, anon, authenticated;
 grant usage on schema proofpay_private to authenticated;
--- Do not add proofpay_private to Supabase's exposed API schemas.
 
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -22,8 +14,6 @@ create table public.profiles (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
--- preferred_workspace is a UI preference, NEVER an authorization source.
--- Passwords and email identity remain in Supabase Auth; do not duplicate them here.
 
 create table public.projects (
   id uuid primary key default gen_random_uuid(),
@@ -39,7 +29,6 @@ create table public.projects (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
--- Budget is not an invoice, paid balance or escrow balance.
 
 create table public.project_members (
   project_id uuid not null references public.projects(id) on delete cascade,
@@ -55,7 +44,7 @@ create index projects_created_by_idx on public.projects(created_by);
 create table public.project_invitations (
   id uuid primary key default gen_random_uuid(),
   project_id uuid not null references public.projects(id) on delete cascade,
-  project_title text not null, -- Snapshot shown to recipient before membership.
+  project_title text not null,
   invited_by uuid not null references public.profiles(id) on delete restrict,
   invited_email text not null check (
     invited_email = lower(btrim(invited_email))
@@ -74,7 +63,6 @@ create table public.project_invitations (
     or (status <> 'accepted' and accepted_by is null and accepted_at is null)
   )
 );
--- At most one pending invitation per project. Resending revokes the previous one.
 create unique index project_invitations_pending_idx
   on public.project_invitations(project_id) where status = 'pending';
 create index project_invitations_email_idx on public.project_invitations(invited_email);
@@ -104,13 +92,10 @@ end;
 $$;
 create trigger proofpay_auth_user_created after insert on auth.users
   for each row execute function proofpay_private.handle_new_user();
--- Include users who signed up before the trigger existed.
 insert into public.profiles(id, full_name)
 select id, left(coalesce(raw_user_meta_data ->> 'full_name', ''), 120)
 from auth.users on conflict (id) do nothing;
 
--- Private helpers avoid recursive project_members RLS policies.
--- Each function derives the viewer from auth.uid(); no caller-supplied viewer ID.
 create function proofpay_private.is_member(p_project_id uuid)
 returns boolean language sql stable security definer set search_path = '' as $$
   select exists (select 1 from public.project_members
@@ -147,8 +132,6 @@ grant select on public.profiles, public.projects, public.project_members,
 grant update (full_name, avatar_url, preferred_workspace) on public.profiles to authenticated;
 grant update (title, description, work_category, budget_amount, due_date)
   on public.projects to authenticated;
--- No direct INSERT/DELETE grants. Project membership and invitation mutations
--- must pass through the checked RPCs below. No browser may self-assign a role.
 
 create policy profiles_read on public.profiles for select to authenticated
 using (id = (select auth.uid()) or proofpay_private.shares_project(id));
@@ -234,7 +217,6 @@ begin
   if v_user is null or v_email is null then
     raise exception 'Sign in with a verified email first' using errcode = '42501';
   end if;
-  -- Lock order is always project, then invitation (also used by invite/revoke).
   select project_id into v_project from public.project_invitations
     where id = p_invitation_id and invited_email = v_email;
   if not found then
@@ -245,7 +227,6 @@ begin
   select * into v_inv from public.project_invitations
     where id = p_invitation_id and invited_email = v_email for update;
   if not found then raise exception 'Invitation unavailable'; end if;
-  -- Retry after a successful accept returns the same project without duplicates.
   if v_inv.status = 'accepted' and v_inv.accepted_by = v_user then return v_project; end if;
   if v_inv.status <> 'pending' or v_inv.expires_at <= now() then
     raise exception 'Invitation is expired or no longer pending';
@@ -278,7 +259,6 @@ begin
 end;
 $$;
 
--- PostgreSQL grants PUBLIC execute by default: explicitly narrow it here.
 revoke all on all functions in schema proofpay_private from public, anon, authenticated;
 grant execute on function proofpay_private.is_member(uuid),
   proofpay_private.is_client(uuid), proofpay_private.shares_project(uuid),
@@ -292,34 +272,7 @@ grant execute on function public.create_project(text,text,text,numeric,date),
 
 commit;
 
--- SETUP CHECK (read-only): should return these 4 tables with rls_enabled = true.
 select schemaname, tablename, rowsecurity as rls_enabled
 from pg_tables where schemaname = 'public'
 and tablename in ('profiles','projects','project_members','project_invitations')
 order by tablename;
-
--- FRONTEND CALL EXAMPLES (comments only; do NOT run as SQL):
--- const { data: projectId, error } = await supabase.rpc('create_project', {
---   p_title: 'KlipScale website', p_description: 'Responsive landing page',
---   p_work_category: 'website', p_budget_amount: 2400, p_due_date: '2026-11-01'
--- });
--- await supabase.rpc('invite_freelancer', {
---   p_project_id: projectId, p_email: 'freelancer@example.com'
--- });
--- // The invited user signs in with that verified email, then:
--- await supabase.rpc('accept_project_invitation', { p_invitation_id: invitationId });
--- // Sidebar view: filter the current user's memberships by role.
--- await supabase.from('project_members').select('role, projects(*)')
---   .eq('user_id', user.id).eq('role', 'freelancer');
--- // RLS remains the authorization boundary, independent of this UI filter.
---
--- REQUIRED BEFORE A REAL LAUNCH:
--- Test with three separate authenticated users A(client), B(invitee), C(unrelated).
--- A creates a project; B/C cannot read it before membership.
--- A invites B; C cannot see/accept B's invitation; B accepts once and may retry.
--- B can read the project but cannot edit it or change project_members directly.
--- A cannot invite themselves. Anonymous users cannot read tables or call RPCs.
--- Changing preferred_workspace must never alter access to any project.
--- Confirm Email must be enabled in Supabase Auth. Do not expose service_role keys.
--- This foundation permits edits to project briefs; lock/version approved agreement
--- terms in the later agreements migration before enabling two-party approvals.

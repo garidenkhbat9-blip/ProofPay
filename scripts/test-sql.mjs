@@ -1,5 +1,3 @@
-// No URL, env file, filesystem DB, socket or external connection is accepted.
-// This process creates a fresh, in-memory PostgreSQL instance and closes it.
 import { PGlite } from '@electric-sql/pglite';
 import { readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';

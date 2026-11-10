@@ -1,4 +1,3 @@
-// Bounded administrative reads only. Never prints credentials, account IDs or email addresses.
 import { createClient } from '@supabase/supabase-js';
 import { createHash } from 'node:crypto';
 const env = process.env;

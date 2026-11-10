@@ -20,7 +20,6 @@ export function deadlineLabel(date: string | null, now = Date.now()) {
   return `Due ${due}`;
 }
 
-/** Read-only presentation; existing workflow and server guards remain authoritative. */
 function freelancerJob(
   data: CloudData,
   project: Project,
@@ -43,8 +42,6 @@ function freelancerJob(
     "Your client";
   const accepted = !!agreement && bothAccepted(data, agreement.id);
   const milestones = agreement ? agreementMilestones(data, agreement.id) : [];
-  // Inspect each latest milestone separately: one item in review must not hide
-  // a different milestone the freelancer can still deliver.
   const deliveries =
     !unavailable && !archived && accepted
       ? milestones

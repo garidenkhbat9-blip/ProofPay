@@ -1,5 +1,3 @@
--- Minimal Supabase platform contract for an IN-MEMORY PostgreSQL test only.
--- Not an Auth/Storage service emulator. Never apply this file to Supabase.
 create role anon nologin;
 create role authenticated nologin;
 create role service_role nologin bypassrls;

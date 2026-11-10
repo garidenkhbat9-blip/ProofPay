@@ -43,7 +43,6 @@ function boundedText(value: unknown, max: number): string {
   return value.trim();
 }
 
-/** AI supplies draft wording, never authoritative amounts, dates or acceptance. */
 export function parseAgreementDraft(
   value: unknown,
   project: Pick<Project, "budget_amount" | "due_date">,

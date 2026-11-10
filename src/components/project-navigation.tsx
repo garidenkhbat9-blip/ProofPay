@@ -41,7 +41,6 @@ export function ProjectPhaseNavigation({
   );
 }
 
-// Legacy route entry points retain their full forms and records.
 export function ProjectTabs({
   id,
   tab,

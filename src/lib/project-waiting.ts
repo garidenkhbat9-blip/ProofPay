@@ -41,7 +41,6 @@ const latestTime = (values: (string | null | undefined)[]) =>
     .sort((a, b) => Date.parse(b) - Date.parse(a))[0] || null;
 const roleName = (role: Role) => (role === "client" ? "Client" : "Freelancer");
 
-/** Calendar deadlines are persisted dates, not a response SLA. Compare in UTC. */
 export function deliveryDeadline(date: string | null | undefined, now: number) {
   if (
     !date ||
@@ -65,7 +64,6 @@ export function deliveryDeadline(date: string | null | undefined, now: number) {
   };
 }
 
-/** Events are read projections of saved records, never a synthesized send log. */
 export function projectEvents(
   data: CloudData,
   projectId: string,
@@ -139,7 +137,6 @@ export function projectEvents(
     );
 }
 
-/** No reminder channel exists. No recipient identity, eligibility or send success is invented. */
 export const reminderAvailability = Object.freeze({
   available: false as const,
   message:
@@ -343,8 +340,6 @@ export function projectWaiting(
       }
     }
   }
-  // Existing permitted work always outranks waiting guidance. Deterministic ties
-  // use real deadline, then milestone position/ID; payment actions stay separate.
   const ranked = [...rows].sort(
     (a, b) =>
       b.next.priority - a.next.priority ||

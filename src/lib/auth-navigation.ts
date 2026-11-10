@@ -11,6 +11,5 @@ export function needsAccountConfirmation(
 }
 
 export function authenticationReturn(explicit: string | null, pending: string | null) {
-  // An invalid explicit destination must not resurrect an older pending route.
   return safeReturn(explicit !== null ? explicit : pending);
 }

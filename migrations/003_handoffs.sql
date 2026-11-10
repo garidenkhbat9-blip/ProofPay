@@ -1,5 +1,3 @@
--- ProofPay 003: private submission links, files/URLs, revisions and client review.
--- Requires 001 and 002. Run ONCE as postgres. Does not enable AI or payments.
 begin;
 create table public.submission_links (
  id uuid primary key default gen_random_uuid(),
@@ -57,7 +55,6 @@ create policy submissions_member_read on public.evidence_submissions for select 
 create policy artifacts_member_read on public.evidence_artifacts for select to authenticated using(exists(select 1 from public.evidence_submissions s where s.id=submission_id));
 create policy reviews_member_read on public.submission_reviews for select to authenticated using(exists(select 1 from public.evidence_submissions s where s.id=submission_id));
 
--- Locks the project before checking the agreed version. All write RPCs use this order.
 create function proofpay_private.lock_handoff_milestone(p_mid uuid) returns uuid
 language plpgsql security definer set search_path='' as $$
 declare v_project uuid;v_agreement uuid;v_latest uuid;
@@ -113,7 +110,6 @@ begin
  return v_id;
 end;$$;
 
--- The private bucket contains download-only evidence. No public file URLs.
 insert into storage.buckets(id,name,public,file_size_limit) values('proofpay-evidence','proofpay-evidence',false,20971520);
 create function proofpay_private.can_upload_evidence(p_name text) returns boolean
 language sql stable security definer set search_path='' as $$
@@ -133,7 +129,6 @@ create policy proofpay_evidence_insert on storage.objects for insert to authenti
  with check(bucket_id='proofpay-evidence' and proofpay_private.can_upload_evidence(name));
 create policy proofpay_evidence_read on storage.objects for select to authenticated
  using(bucket_id='proofpay-evidence' and proofpay_private.can_read_evidence(name));
--- No UPDATE or DELETE policy: uploaded objects cannot be overwritten or deleted by clients.
 
 create function public.submit_evidence(p_submission_id uuid,p_notes text,p_artifacts jsonb) returns uuid
 language plpgsql security definer set search_path='' as $$
@@ -143,7 +138,6 @@ begin
  if not found or v_s.submitted_by<>auth.uid() then raise exception 'Submission unavailable' using errcode='42501'; end if;
  perform proofpay_private.lock_handoff_milestone(v_s.milestone_id);
  select * into v_s from public.evidence_submissions where id=p_submission_id;
- -- A retry after a committed submission returns the same snapshot.
  if v_s.status<>'uploading' then return v_s.id; end if;
  select id into v_latest from public.evidence_submissions where milestone_id=v_s.milestone_id order by revision desc limit 1;
  if v_latest<>v_s.id then raise exception 'A newer revision exists'; end if;

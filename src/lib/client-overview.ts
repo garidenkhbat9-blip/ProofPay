@@ -10,8 +10,6 @@ export function clientOverview(data: CloudData, userId?: string) {
   const unavailable = !!(data.invitationError || data.agreementError || data.deliveryError);
   const actions = active.filter(row => row.step).sort((a, b) => (b.step?.priority || 0) - (a.step?.priority || 0));
   const review = unavailable ? [] : active.filter(row => row.step?.stage === 3);
-  // Only offer the existing text assistant for an actionable current submission
-  // with text notes. This does not assert that Gemini is configured or has run.
   const aiReview = review.find(row => currentDeliveries(data, [row.project.id]).some(s => s.status === "submitted" && !!s.notes.trim() && row.step?.href === `/handoff/${s.link_id}`));
   return {
     rows, active, next: actions[0], aiReview,

@@ -1,5 +1,5 @@
-# Renders the actual React components with isolated account/data adapters.
-# Does not start Next.js, authenticate real accounts or contact any service.
+
+
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location -LiteralPath $projectRoot
@@ -48,6 +48,7 @@ $css += [IO.File]::ReadAllText((Join-Path $projectRoot 'src/app/evidence-review.
 $css += [IO.File]::ReadAllText((Join-Path $projectRoot 'src/app/project-waiting.css'))
 $css += [IO.File]::ReadAllText((Join-Path $projectRoot 'src/app/demo-payment.css'))
 $css += [IO.File]::ReadAllText((Join-Path $projectRoot 'src/app/polish.css'))
+$css += [IO.File]::ReadAllText((Join-Path $projectRoot 'src/app/hero.css'))
 $css = $css -replace '@import "tailwindcss/[^;]+;', ''
 $css = '@font-face{font-family:"DM Sans Variable";src:url("../../node_modules/@fontsource-variable/dm-sans/files/dm-sans-latin-wght-normal.woff2");font-weight:100 1000}@font-face{font-family:"Manrope Variable";src:url("../../node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2");font-weight:200 800}' + $css
 [IO.File]::WriteAllText((Join-Path $artifacts 'preview.css'), $css)

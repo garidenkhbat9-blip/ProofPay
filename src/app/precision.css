@@ -1,4 +1,3 @@
-/* Quiet Precision refinement. White surfaces and the existing local font stack. */
 :root {
   --ink: #172521;
   --muted: #68756f;
@@ -72,7 +71,6 @@ button.primary:hover,
   object-fit: contain;
 }
 
-/* Public exploration entry; shared judge styles keep the existing workspace intact. */
 .judge-page {
   background: #faf9f6;
   min-height: 100vh;
@@ -304,7 +302,6 @@ button.primary:hover,
   font-size: 12px;
 }
 
-/* Authentication */
 .authpage {
   background: #fafbf9;
 }
@@ -376,7 +373,6 @@ button.primary:hover,
   box-shadow: none;
 }
 
-/* Authenticated workspace */
 .sidebar {
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -902,7 +898,6 @@ dialog::backdrop {
     height: 80px;
   }
 }
-/* Guided workspace entry; perspective remains a secondary preference. */
 .sidebar .workspace { align-items: center; gap: 10px; margin-bottom: 4px; }
 .sidebar .workspace > .icon { color: var(--accent); }
 .sidebar .workspace small { white-space: normal; overflow: visible; font-size: 11px; line-height: 1.6; margin-top: 3px; }
@@ -969,7 +964,6 @@ summary:focus-visible { outline: 3px solid #168566; outline-offset: 3px; }
   }
 }
 
-/* Shared Sign In / Sign Up polish; authentication behavior lives in React. */
 .auth-polished { background: #fafbf8; }
 .auth-polished .authlayout { grid-template-columns: minmax(0, 1fr) minmax(0, 460px); gap: clamp(40px, 6vw, 88px); padding-block: 32px; }
 .auth-polished .authcard { padding: 30px; border: 1px solid #dce3dc; border-radius: 16px; box-shadow: none; min-width: 0; }
@@ -1006,7 +1000,6 @@ summary:focus-visible { outline: 3px solid #168566; outline-offset: 3px; }
 @media(max-width: 850px) { .auth-polished .authlayout { grid-template-columns: minmax(0,460px); justify-content: center; padding-block: 24px; gap: 24px; } }
 @media(max-width: 480px) { .auth-polished { padding: 0 16px 24px; } .auth-polished .authlayout { width: 100%; padding: 18px 0; } .auth-polished .authcard { padding: 24px 18px; width: 100%; } .auth-polished .authcard > h2 { font-size: 24px; } .auth-polished .role-card { grid-template-columns: 20px minmax(0,1fr); padding: 11px 8px; column-gap: 6px; } .auth-polished .role-card span { display: none; } .auth-polished .role-card .role-icon { grid-row: auto; width: 20px; height: 20px; } }
 
-/* Compact, one-time workspace preference. */
 .workspace-onboarding-page { min-height: 100svh; display: grid; place-items: center; padding: 32px 16px; background: #f4f7f3; }
 .workspace-onboarding-card { width: min(100%, 460px); min-width: 0; box-sizing: border-box; padding: clamp(24px, 5vw, 36px); background: white; border: 1px solid #dce4de; border-radius: 20px; }
 .workspace-onboarding-card h1 { font-size: 28px; line-height: 1.2; margin: 28px 0 12px; }

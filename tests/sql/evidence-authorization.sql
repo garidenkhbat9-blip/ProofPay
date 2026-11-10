@@ -1,4 +1,3 @@
--- Disposable SQL policy/RPC test, NOT an Auth login or Storage HTTP test.
 begin;
 do $$
 declare c uuid:=gen_random_uuid(); f uuid:=gen_random_uuid(); o uuid:=gen_random_uuid();

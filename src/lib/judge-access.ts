@@ -26,8 +26,6 @@ export function legacyJudgeDestination(value: unknown) {
   return role ? judgeDestination(role) : "/dashboard";
 }
 
-// This is a presentation allowlist, never an authorization mechanism.
-// Supabase membership and RLS still decide which records can be read or changed.
 export function judgeProjectIds(value: string | undefined): string[] {
   const ids =
     value

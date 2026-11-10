@@ -1,8 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { safeReturn } from "./domain";
 
-// Supabase Auth enforces email delivery and verification limits server-side.
-// Never use an admin client or create a reviewer identity implicitly.
 export async function requestReviewerCode(
   client: SupabaseClient,
   email: string,
@@ -17,7 +15,6 @@ export async function requestReviewerCode(
         origin + "/login?next=" + encodeURIComponent(safeReturn(next)),
     },
   });
-  // Do not reveal whether an address is registered.
   if (
     error &&
     !["signup_disabled", "user_not_found", "otp_disabled"].includes(

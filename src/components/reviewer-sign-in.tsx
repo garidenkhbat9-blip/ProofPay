@@ -49,7 +49,7 @@ export function ReviewerSignIn({
         );
         onVerified();
       } else {
-        deferAuth(); // UX only; provider server limits remain authoritative.
+        deferAuth();
         await requestReviewerCode(
           getSupabase(),
           address,

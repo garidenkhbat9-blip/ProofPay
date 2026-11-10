@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 
-/** One lockup everywhere. The source PNG includes transparent optical padding. */
 export function BrandContents() {
   return (
     <>

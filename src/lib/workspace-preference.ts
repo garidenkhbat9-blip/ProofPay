@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { workspaceIntent, type WorkspaceIntent } from "./google-auth";
 
-/** Pin writes to a verified identity even if another tab switches accounts. */
 export async function saveWorkspacePreference(client: SupabaseClient, expectedId: string, role: WorkspaceIntent) {
   if (!workspaceIntent(role)) throw Error("Choose a valid workspace.");
   const session = await client.auth.getSession();

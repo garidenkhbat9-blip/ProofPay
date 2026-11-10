@@ -1,6 +1,3 @@
--- Run only on a DISPOSABLE/local Supabase database after migrations 001-005.
--- psql -v ON_ERROR_STOP=1 "$TEST_DATABASE_URL" -f tests/payments-authorization.sql
--- All test rows are rolled back. Never point this at the production database.
 begin;
 do $$
 declare c uuid:=gen_random_uuid(); f uuid:=gen_random_uuid(); outsider uuid:=gen_random_uuid();
@@ -46,8 +43,6 @@ begin
    update public.payments set amount=1 where id=result.id;
    raise exception 'FAIL: financial snapshot was mutable';
  exception when raise_exception then if sqlerrm<>'PAYMENT_SNAPSHOT_IMMUTABLE' then raise; end if; end;
- -- Simulate changes between prepare and claim. Each expected-error subtransaction
- -- automatically restores its fixture mutation. No stored financial history is rewritten.
  begin
    delete from public.agreement_approvals where agreement_id=a and user_id=c;
    perform public.claim_paypal_payment(result.id,lease,true);
@@ -92,7 +87,6 @@ begin
    perform public.claim_paypal_payment(result.id,lease,true);
    raise exception 'FAIL: superseded agreement acquired a creation lease';
  exception when raise_exception then if sqlerrm<>'PAYMENT_APPROVAL_REQUIRED' then raise; end if; end;
- -- Fixture cleanup only, inside this disposable transaction.
  delete from public.agreements where project_id=p and version=2;
  update public.paypal_merchant_bindings set active=false where freelancer_id=f;
  begin

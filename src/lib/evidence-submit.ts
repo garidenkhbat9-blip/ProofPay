@@ -4,7 +4,6 @@ export interface EvidenceSnapshot {
   p_artifacts: Record<string, unknown>[];
 }
 
-/** Keep a finalize request intact if its response is lost after DB commit. */
 export function createEvidenceFinalizer() {
   let pending: EvidenceSnapshot | null = null;
   let confirmed = false;

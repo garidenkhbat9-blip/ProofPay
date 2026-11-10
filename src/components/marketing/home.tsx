@@ -1,5 +1,44 @@
 import { Brand, BrandContents } from "@/components/brand";
 import Link from "next/link";
+import { Icon } from "@/components/ui";
+import "@/app/hero.css";
+
+function HeroVisualization() {
+  return (
+    <figure
+      className="hero-scene"
+      aria-label="Illustrative ProofPay workflow, using example data"
+    >
+      <div className="hero-preview">
+        <header className="hero-preview-heading">
+          <Icon name="folder" />
+          <h2>Website launch</h2>
+        </header>
+        <div className="hero-preview-row">
+          <Icon name="report" />
+          <strong>Agreement</strong>
+          <span>Scope & milestones</span>
+        </div>
+        <div className="hero-preview-row">
+          <Icon name="link" />
+          <strong>Evidence</strong>
+          <span>Files & links</span>
+        </div>
+        <div className="hero-preview-row">
+          <Icon name="compass" />
+          <strong>AI Review</strong>
+          <span>Not run</span>
+        </div>
+        <p className="hero-preview-footer">
+          <Icon name="shield" />
+          Client approval stays with you.
+        </p>
+      </div>
+      <figcaption>Example workspace</figcaption>
+    </figure>
+  );
+}
+
 export function HomePage() {
   return (
     <div className="marketing home-polish">
@@ -26,57 +65,45 @@ export function HomePage() {
         </div>
       </header>
       <main id="home-main">
-        <section className={"showhero"}>
-          <h1>
-            {"Great work deserves"}
-            <br />
-            <span>{"a clear agreement."}</span>
-          </h1>
-          <p>
-            {"Set the milestones. Deliver the work."}
-            <br />
-            {"Keep the agreement and every review in one place."}
-          </p>
-          <div className={"herobuttons"}>
-            <Link className={"buttonlike forest"} href={"/explore"}>
-              {"Get started "}
-              <svg
-                className={"icon"}
-                viewBox={"0 0 24 24"}
-                aria-hidden={"true"}
-              >
-                <path d={"M5 12h14M14 7l5 5-5 5"}></path>
-              </svg>
-            </Link>
-            <Link className={"buttonlike quietbutton"} href={"/how-it-works"}>
-              {"How it works "}
-              <svg
-                className={"icon"}
-                viewBox={"0 0 24 24"}
-                aria-hidden={"true"}
-              >
-                <path d={"M5 12h14M14 7l5 5-5 5"}></path>
-              </svg>
-            </Link>
+        <section
+          className="showhero hero-atmosphere"
+          aria-labelledby="hero-title"
+        >
+          <div className="hero-copy">
+            <h1 id="hero-title">
+              {"Great work deserves"}
+              <br />
+              <span>{"a clear agreement."}</span>
+            </h1>
+            <p>
+              {"Set the milestones. Deliver the work. "}
+              <br />
+              {"Keep the agreement and every review in one place."}
+            </p>
+            <div className={"herobuttons"}>
+              <Link className={"buttonlike forest"} href={"/explore"}>
+                {"Get started "}
+                <svg
+                  className={"icon"}
+                  viewBox={"0 0 24 24"}
+                  aria-hidden={"true"}
+                >
+                  <path d={"M5 12h14M14 7l5 5-5 5"}></path>
+                </svg>
+              </Link>
+              <Link className={"buttonlike quietbutton"} href={"/how-it-works"}>
+                {"How it works "}
+                <svg
+                  className={"icon"}
+                  viewBox={"0 0 24 24"}
+                  aria-hidden={"true"}
+                >
+                  <path d={"M5 12h14M14 7l5 5-5 5"}></path>
+                </svg>
+              </Link>
+            </div>
           </div>
-          <span className={"herotiny"}>
-            A shared workspace, from the first brief to the final review.
-          </span>
-          <div className={"hero-orbit"} aria-hidden={"true"}></div>
-          <ol className="hero-workflow" aria-label="The ProofPay workflow">
-            <li>
-              <span>01</span>Agree
-            </li>
-            <li>
-              <span>02</span>Deliver
-            </li>
-            <li>
-              <span>03</span>Review
-            </li>
-            <li>
-              <span>04</span>Pay
-            </li>
-          </ol>
+          <HeroVisualization />
         </section>
         <section className={"showcase"}>
           <div className={"sectioncaption"}>

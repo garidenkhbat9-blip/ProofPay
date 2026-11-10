@@ -3,7 +3,6 @@ import { PAYPAL_BASE, type PayPalConfig } from "./config";
 import { PaymentError, providerError } from "./errors";
 import type { PayPalInvoice } from "./model";
 
-/** Constructed only by the server. Injected transport keeps failure tests offline. */
 export class PayPalGateway {
   private token: { value: string; expires: number } | null = null;
   private tokenRequest: Promise<string> | null = null;
@@ -52,8 +51,6 @@ export class PayPalGateway {
     }); } catch (error) { if (error instanceof PaymentError && error.diagnostic.code === "PAYPAL_AUTH_FAILED") this.token = null; throw error; }
   }
   async create(body: unknown, operationId: string): Promise<string> {
-    // DB attempt marker + recovery-by-number are authoritative. We do NOT
-    // assume this endpoint retains/deduplicates PayPal-Request-Id indefinitely.
     const result = await this.api("/v2/invoicing/invoices", "create_invoice", "POST", body, operationId) as { id?: string; href?: string; links?: { rel: string; href: string }[] };
     let id = result?.id;
     const href = result?.href || result?.links?.find((l) => l.rel === "self")?.href;
@@ -78,7 +75,6 @@ export class PayPalGateway {
       if (!value || value.length > 4096) throw invalidWebhook();
       body[key] = value;
     }
-    // No arbitrary certificate URL is fetched by this application.
     let cert: URL;
     try { cert = new URL(String(body.cert_url)); } catch { throw invalidWebhook(); }
     if (cert.protocol !== "https:" || !["api.paypal.com", "api.sandbox.paypal.com", "api-m.sandbox.paypal.com"].includes(cert.hostname) || cert.port || cert.username || cert.password || !cert.pathname.startsWith("/v1/notifications/certs/")) throw invalidWebhook();

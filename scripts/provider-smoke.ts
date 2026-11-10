@@ -1,4 +1,3 @@
-// One bounded synthetic Gemini draft; PayPal OAuth ONLY. No database or invoice writes.
 import { generateStructured, DEFAULT_GEMINI_MODEL } from "../src/lib/gemini";
 import { agreementDraftPrompt, agreementDraftSchema, parseAgreementDraft } from "../src/lib/agreement-draft";
 import { paymentConfig } from "../src/lib/payments/config";

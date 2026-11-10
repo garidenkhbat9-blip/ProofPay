@@ -30,7 +30,6 @@ export async function POST(request: Request) {
       reconcile: async (invoiceId) => {
         const payment = await services.admin.from("payments").select("*").eq("paypal_invoice_id", invoiceId).maybeSingle();
         if (payment.error) throw databasePaymentError("find_webhook_payment", payment.error.code);
-        // The event may arrive before create response persistence. Keep it retryable.
         if (!payment.data) throw new PaymentError("PAYPAL_WEBHOOK_PROCESSING_FAILED", "The invoice has not been linked to a ProofPay payment.", "process_webhook", "Retry delivery after invoice recovery. Unrelated invoices must never update a milestone.", 503, true);
         await assertMerchant(services, payment.data as Payment);
         await runPayment(paymentStore(services.admin), services.gateway, payment.data as Payment,

@@ -1,4 +1,3 @@
-// Real Chromium rendering with isolated Auth/data adapters. No service requests.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn, execFileSync } from 'node:child_process';
@@ -15,7 +14,6 @@ const chrome = process.env.CHROME_PATH || 'C:/Program Files (x86)/Google/Chrome/
 test('client workspace components: desktop/mobile tour, actions and responsive layouts', { timeout: 120000, skip: process.platform !== 'win32' || !existsSync(chrome) ? 'Component fixture builder requires Windows and Chrome; unit tests still run.' : false }, async () => {
   execFileSync('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'scripts/preview-client-experience.ps1'], { stdio: 'pipe', windowsHide: true });
   const profile = await mkdtemp(join(artifacts, 'cdp-profile-'));
-  // Opt-in only for these local fixtures in restricted Windows runners.
   const fixtureFlags = process.env.PROOFPAY_FIXTURE_NO_SANDBOX === '1' ? ['--no-sandbox', '--disable-features=RendererCodeIntegrity'] : [];
   const browser = spawn(chrome, ['--headless=new', ...fixtureFlags, '--disable-gpu', '--no-first-run', '--no-default-browser-check', '--disable-background-networking', '--allow-file-access-from-files', '--remote-debugging-address=127.0.0.1', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] });
   let socket;
@@ -68,6 +66,7 @@ test('client workspace components: desktop/mobile tour, actions and responsive l
     };
     await send('Runtime.enable');
     const cases = [
+      ...[1024,768].map(width=>[`public-home-${width}`,'view=home',width,1100]),
       ...['home','explore','product','how','faq'].flatMap(view=>[1440,390,320].map(width=>[`public-${view}-${width}`,`view=${view}`,width,1100])),
       ['account-client','view=dashboard',1440,1000],
       ['account-freelancer','view=dashboard&role=freelancer',390,844],
@@ -159,9 +158,20 @@ test('client workspace components: desktop/mobile tour, actions and responsive l
           const destinations=await evaluate(`[...document.querySelectorAll('.judge-choice')].map(a=>a.getAttribute('href'))`);
           assert.deepEqual(destinations,['/login?next=%2Fdashboard%3Fperspective%3Dclient','/login?next=%2Fdashboard%3Fperspective%3Dfreelancer']);
         }
-        if(name.includes('home')) assert.equal(await evaluate(`document.querySelector('.herobuttons a').getAttribute('href')`),'/explore');
+        if(name.includes('home')) {
+          assert.equal(await evaluate(`document.querySelector('.herobuttons a').getAttribute('href')`),'/explore');
+          assert(await evaluate(`document.querySelector('.hero-scene').textContent.includes('Not run') && document.querySelector('.hero-scene figcaption').textContent.includes('Example workspace')`));
+        }
         const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
         await writeFile(join(artifacts,`${name}.png`),Buffer.from(shot.data,'base64'));
+        if(name.includes('home')) {
+          await evaluate(`document.querySelector('.hero-scene').scrollIntoView({block:'center'})`);
+          await delay(100);
+          const visibleText=await evaluate(`Array.from(document.querySelectorAll('.hero-preview-heading h2,.hero-preview-row strong,.hero-preview-row > span,.hero-preview-footer')).map(el=>{const r=el.getBoundingClientRect();const top=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return {text:el.textContent,visible:el.contains(top)||top===el};})`);
+          assert(visibleText.every(item=>item.visible),name+': obscured hero text '+JSON.stringify(visibleText.filter(item=>!item.visible)));
+          const scene=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
+          await writeFile(join(artifacts,`hero-scene-${width}.png`),Buffer.from(scene.data,'base64'));
+        }
         if(name==='public-home-1440') {
           await evaluate(`document.querySelector('.featuresection').scrollIntoView()`);await delay(350);
           const section=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
@@ -201,7 +211,7 @@ test('client workspace components: desktop/mobile tour, actions and responsive l
         assert(await evaluate(`document.activeElement===document.querySelector('${selector}')`));
         if(name==='account-sidebar-mobile') {
           assert.equal(await evaluate(`document.querySelector('.sidebar').getAttribute('aria-modal')`),'true');
-          assert(await evaluate(`(()=>{const el=document.querySelector('.workspace-close'),r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2))})()`),'Mobile navigation close button must not be covered by the topbar');
+          await waitFor(`(()=>{const el=document.querySelector('.workspace-close'),r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2))})()`);
         }
         await evaluate(`document.querySelector('${selector}').click()`);
         await waitFor(`!!document.querySelector('[role="menu"]')`);

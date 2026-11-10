@@ -1,4 +1,3 @@
-/** A bounded, per-process burst guard. Database constraints protect persisted actions. */
 export function createRequestGate(cooldownMs: number, maxEntries = 1000) {
   const entries = new Map<string, { busy: boolean; nextAllowed: number }>();
   return {

@@ -1,4 +1,3 @@
-/* Loaded by the supplemental component harness, never by the application. */
 const React = load('react');
 const params = new URLSearchParams(location.search);
 const view = params.get('view') || 'dashboard';
@@ -121,8 +120,6 @@ let generation=0;
 let rendered={component:Dashboard,props:{}};
 function rerender(){root.render(React.createElement(WorkspaceShell,{key:generation},React.createElement(rendered.component,rendered.props)));}
 function render(component=Dashboard,props={}) {rendered={component,props};++generation;rerender();}
-// Wait for layout as well as React's queued update. Virtual headless time can
-// advance timers before requestAnimationFrame has positioned the spotlight.
 const wait=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(resolve,20))));
 async function until(predicate) {for(let i=0;i<80;i++){if(predicate())return;await wait();}throw Error('Timed out waiting for UI');}
 const assert=(ok,message)=>{if(!ok)throw Error(message);};

@@ -3,7 +3,6 @@ export type WorkspaceIntent = "client" | "freelancer";
 export function workspaceIntent(value: unknown): WorkspaceIntent | null {
   return value === "client" || value === "freelancer" ? value : null;
 }
-// Presentation preference only. Bound to the server-created OAuth attempt, never authorization.
 export function readOAuthIntent(raw: string | undefined, attempt: string, now = Date.now()): WorkspaceIntent | null {
   if (!raw) throw Error("Missing sign-in context. Please start Google sign-in again.");
   const value = JSON.parse(raw);

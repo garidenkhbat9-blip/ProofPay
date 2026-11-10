@@ -5,7 +5,6 @@ import { authorizeMember } from "../project-authorization";
 import { ApiError } from "../api-http";
 export { ApiError, apiErrorResponse, readJsonBounded } from "../api-http";
 
-/** Validate the bearer token with Auth, then query with that user's RLS context. */
 export async function authorizeProject(
   request: Request,
   projectId: string,

@@ -2,7 +2,6 @@ import type { Invitation } from "./types";
 
 type Recipient = { id: string; email?: string; email_confirmed_at?: string } | null;
 
-/** Presentation filtering supplements, never replaces, authenticated RLS. */
 export function receivedInvitations(items: Invitation[], user: Recipient) {
   const email = user?.email?.trim().toLowerCase();
   if (!user?.id || !user.email_confirmed_at || !email) return [];

@@ -112,7 +112,6 @@ test("evidence URLs normalize to the SQL web scheme constraint", () => {
   assert.equal(validateEvidence([], ["HTTPS://EXAMPLE.COM/work"]), "");
   for (const url of ["https:example.com", "//example.com"])
     assert(validateEvidence([], [url]));
-  // Unicode is percent encoded before saving; enforce the stored length.
   assert(validateEvidence([], ["https://example.com/" + "é".repeat(400)]));
 });
 test("delivery requires both distinct project roles to accept", () => {

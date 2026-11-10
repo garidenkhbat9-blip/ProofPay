@@ -1,5 +1,3 @@
-// At most three sequential synthetic generations; stop at the first failure.
-// Never sends project records, prints generated text, retries, or calls PayPal.
 import { generateStructured, GeminiError, DEFAULT_GEMINI_MODEL } from "../src/lib/gemini";
 import { agreementDraftPrompt, agreementDraftSchema, parseAgreementDraft } from "../src/lib/agreement-draft";
 import { evidenceReviewPrompt, evidenceReviewSchema, parseEvidenceReview } from "../src/lib/evidence-review";

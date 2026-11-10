@@ -17,7 +17,6 @@ export function validateAuthField(
       : "Enter a valid email address, like name@example.com.";
   }
   if (!value) return "Enter your password.";
-  // Existing accounts must still be able to sign in with their current password.
   return mode !== "login" && value.length < MIN_PASSWORD_LENGTH
     ? "Use at least 8 characters."
     : "";
@@ -40,7 +39,6 @@ export function authErrorMessage(error: unknown): string {
     case "email_not_confirmed":
       return "Confirm your email before signing in. Check your inbox for the confirmation link.";
     case "weak_password":
-      // Retain any additional requirements returned by the configured backend.
       return (
         detail.message ||
         "This password is too weak. Choose a different password with at least 8 characters."

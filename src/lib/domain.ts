@@ -86,7 +86,6 @@ export const activeLink = (d: CloudData, l: SubmissionLink, now = Date.now()) =>
   l.active && Date.parse(l.expires_at) > now && reviewable(d, l);
 export function safeUrl(value: string) {
   try {
-    // Require an explicit web scheme; URL() also accepts malformed https:host.
     if (!/^https?:\/\//i.test(value.trim())) return null;
     const u = new URL(value);
     return ["http:", "https:"].includes(u.protocol) ? u.href : null;
@@ -150,7 +149,6 @@ export function validateAgreement(
     ? ""
     : "Milestone amounts must add up to the project budget.";
 }
-// Keeps old links shared from the buildless application usable on this origin.
 export function legacyPath(hash: string): string | null {
   const parts = hash.replace(/^#/, "").split("/");
   const id = parts[1];

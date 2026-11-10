@@ -41,7 +41,6 @@ type Action = {
   invite?: boolean;
 };
 
-/** Four display phases only. All mutations still use the existing checked flows. */
 export function projectWorkspace(
   data: CloudData,
   id: string,

@@ -1,5 +1,3 @@
-// Local configuration + OAuth + bounded SELECTs only. No invoices/emails or writes.
-// Run with Node --env-file=.env.local --import tsx scripts/payment-launch-readonly.ts.
 import { createClient } from "@supabase/supabase-js";
 import { createHash } from "node:crypto";
 import { paymentConfig } from "../src/lib/payments/config";

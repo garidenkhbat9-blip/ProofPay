@@ -1,5 +1,5 @@
-# Supplemental deterministic browser execution when Node is unavailable.
-# No database, auth service, payment provider or project data is contacted.
+
+
 param([switch]$LocalFixturesWithoutChromeSandbox)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot

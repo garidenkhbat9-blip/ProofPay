@@ -7,8 +7,6 @@ export const maxDuration = 120;
 const requests = createRequestGate(60000);
 export async function POST(request: Request, context: {params: Promise<{id: string; submissionId: string}>}) {
   try {
-    // IDs come from the path; do not clone Next's streamed POST body, which
-    // requires Node duplex options and can throw before authentication.
     request = new Request(request.url, {method: request.method, headers: request.headers,
       signal: AbortSignal.any([request.signal, AbortSignal.timeout(100000)])});
     const {id, submissionId} = await context.params;

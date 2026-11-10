@@ -1,5 +1,3 @@
--- READ ONLY. Administrator may run in SQL Editor to compare deployed definitions.
--- This does not execute workflow RPCs or read user evidence/financial records.
 select n.nspname as schema, p.proname as function, pg_get_functiondef(p.oid) as definition,
        p.prosecdef as security_definer, p.proconfig as configuration,
        has_function_privilege('anon', p.oid, 'EXECUTE') as anon_execute,

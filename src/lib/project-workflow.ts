@@ -37,7 +37,6 @@ export const projectStages = [
   "Payment",
 ];
 
-// A perspective toggle never grants permission. The project membership is authoritative.
 function nextAction(
   data: CloudData,
   project: Project,
@@ -240,8 +239,6 @@ function nextAction(
   });
 }
 
-// States are derived separately: a review for one milestone does not mean
-// every delivery or payment in the project has been completed.
 export function projectNextStep(
   data: CloudData,
   project: Project,

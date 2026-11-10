@@ -14,7 +14,6 @@ import "@/app/demo-payment.css";
 
 export function DemoPaymentPage() {
   const { user, ready, authError } = useWorkspace();
-  // WorkspaceShell handles login redirects. No sample controls before Auth is ready.
   if (!ready || !user || authError) return null;
   return <DemoPayment key={user.id} />;
 }

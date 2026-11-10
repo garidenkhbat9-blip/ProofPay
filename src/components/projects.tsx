@@ -394,16 +394,12 @@ function InvitationList({
                       : "revoke_project_invitation",
                     { p_invitation_id: selected.id },
                   ).catch(async (error: unknown) => {
-                    // A revoke/expiry may have raced the review. Reconcile the
-                    // visible list even when the server correctly rejects it.
                     await refresh();
                     throw error;
                   });
                   try {
                     await refreshChecked();
                   } catch {
-                    // The mutation was confirmed even if its follow-up read
-                    // failed. Do not suggest resubmitting the same decision.
                     setSelected(null);
                     notice(incoming
                       ? "Invitation accepted. Refresh the workspace to update your invitations."

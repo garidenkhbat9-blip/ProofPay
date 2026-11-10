@@ -1,11 +1,8 @@
--- ProofPay 005: recheck payment eligibility between preparation and lease acquisition.
--- Apply only after disposable SQL tests and explicit administrator approval.
 begin;
 create or replace function public.claim_paypal_payment(p_id uuid,p_lease uuid,p_create boolean)
 returns jsonb language plpgsql security definer set search_path='' as $$
 declare p public.payments%rowtype; may_create boolean:=false; v_project_id uuid;
 begin
- -- Match the project-before-payment lock order used by preparation and agreement changes.
  select pay.project_id into v_project_id from public.payments pay where pay.id=p_id;
  perform 1 from public.projects where id=v_project_id for update;
  select * into p from public.payments where id=p_id for update;

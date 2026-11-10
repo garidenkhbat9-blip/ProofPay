@@ -1,5 +1,3 @@
--- PROPOSAL: requires owner approval before deployment. Do not rerun 001-005.
--- Archives only unshared drafts. No deletes or changes to existing RPCs/policies.
 begin;
 
 alter table public.projects
@@ -23,8 +21,6 @@ grant select on public.project_archive_events to authenticated;
 create policy project_archive_events_read on public.project_archive_events
  for select to authenticated using (proofpay_private.is_member(project_id));
 
--- An eligibility hint is never authorization. The mutation calls this again
--- after taking the SAME project-row lock used by invitation/agreement/delivery RPCs.
 create function proofpay_private.project_archive_blocker(p_project uuid)
 returns text language plpgsql security definer set search_path='' as $$
 begin
@@ -78,7 +74,6 @@ begin
  select * into previous from public.project_archive_events where actor_id=auth.uid() and request_id=p_request_id;
  if found then
   if previous.project_id<>p_project_id or previous.action<>p_action then raise exception 'ARCHIVE_REQUEST_REUSED'; end if;
-  -- A late retry acknowledges its original commit without replaying it over a reopen.
   return public.get_project_archive_state(p_project_id) || jsonb_build_object('confirmed',true,'replayed',true);
  end if;
  if p.archive_revision<>p_expected_revision then raise exception 'ARCHIVE_STALE'; end if;
@@ -97,5 +92,4 @@ end; $$;
 revoke all on function proofpay_private.project_archive_blocker(uuid) from public,anon,authenticated;
 revoke all on function public.get_project_archive_state(uuid),public.manage_project_archive(uuid,text,uuid,integer) from public,anon,authenticated;
 grant execute on function public.get_project_archive_state(uuid),public.manage_project_archive(uuid,text,uuid,integer) to authenticated;
--- Existing column-level UPDATE grants still exclude status and both new columns.
 commit;

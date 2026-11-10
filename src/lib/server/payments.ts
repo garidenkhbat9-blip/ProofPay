@@ -76,7 +76,6 @@ export function paymentResponseError(error: unknown, operation: string) {
     error.status < 500 ? error.message : "Payment access could not be checked.", operation,
     error.status === 401 ? "Sign in again and refresh payment status." : "Check your project membership or contact support with the reference ID.", error.status, error.status >= 500)
     : new PaymentError("PAYPAL_PAYMENT_NOT_CONFIRMED", "The payment operation could not be confirmed.", operation, "Refresh payment status and contact support with the reference ID if this persists.", 500, true);
-  // Only application-authored fields and sanitized provider debug IDs are logged.
   console.error("proofpay-payment", issue.diagnostic);
   return Response.json({ error: issue.diagnostic }, { status: issue.status, headers: { "Cache-Control": "no-store", ...(issue.status === 429 ? { "Retry-After": "60" } : {}) } });
 }

@@ -12,7 +12,6 @@ export function workspaceIdentity(user: WorkspaceUser | null, profiles: Profile[
   return {
     displayName: name || "Your account",
     initials: name ? name.split(" ").slice(0, 2).map((part) => Array.from(part)[0]).join("").toUpperCase() : "PP",
-    // The greeting stays neutral; the separate guided tour owns first-visit state.
     greeting: "Welcome to ProofPay",
   };
 }

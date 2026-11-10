@@ -4,7 +4,6 @@ export const runtime = "nodejs";
 export async function GET(request: Request) {
   try {
     const { client, user } = await authenticatedPayments(request);
-    // RLS and column grants filter all rows and keep payer/merchant secrets private.
     const [payments, history] = await Promise.all([
       client.from("payments").select(paymentColumns).order("created_at", { ascending: false }).limit(500),
       client.from("payment_history").select("*").order("created_at", { ascending: false }).limit(200),

@@ -28,7 +28,7 @@ export async function GET(request: Request) {
       }
       destination = oauthDestination(intent || user.user_metadata?.preferred_workspace);
     }
-  } catch { /* Never log callback codes, provider details or session secrets. */ }
+  } catch {   }
   jar.delete("proofpay-oauth-attempt");
   jar.delete("proofpay-oauth-intent");
   const response = NextResponse.redirect(new URL(destination, origin), 303);

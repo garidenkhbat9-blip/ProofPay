@@ -62,7 +62,6 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       (mode === "login" || mode === "signup") &&
       !window.location.hash.includes("type=recovery")
     ) {
-      // A perspective choice must never silently accept a different account.
       if (needsAccountConfirmation(destination, user.id, submitted, confirmedAccount)) return;
       let pending: string | null = null;
       try {

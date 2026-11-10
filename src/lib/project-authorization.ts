@@ -2,7 +2,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Project, Role } from "./types";
 import { ApiError } from "./api-http";
 
-/** Auth-verified identity and user-scoped RLS; perspective is never consulted. */
 export async function authorizeMember(client: SupabaseClient, bearer: string, projectId: string, requiredRole?: Role) {
   const { data: auth, error: authError } = await client.auth.getUser(bearer);
   if (

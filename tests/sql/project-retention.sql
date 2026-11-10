@@ -1,5 +1,3 @@
--- Disposable in-memory PostgreSQL fixture only. No hosted database connection.
--- Verifies the CURRENT boundary: even owners cannot delete/archive yet.
 begin;
 do $$
 declare c uuid:=gen_random_uuid(); f uuid:=gen_random_uuid(); o uuid:=gen_random_uuid();
@@ -48,7 +46,6 @@ do $$ begin
  if exists(select 1 from public.projects where id=current_setting('proofpay.test.project')::uuid) or exists(select 1 from public.payments) then raise exception 'FAIL: guessed ID disclosed records'; end if;
 end;$$;
 
--- Identical direct requests from an owner, participant and outsider must fail.
 do $$ declare actor text; tbl text; begin
  foreach actor in array array[current_setting('proofpay.test.client'),current_setting('proofpay.test.freelancer'),current_setting('proofpay.test.outsider')] loop
   perform set_config('request.jwt.claim.sub',actor,true);

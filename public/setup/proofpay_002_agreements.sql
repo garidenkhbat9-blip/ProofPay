@@ -1,7 +1,3 @@
--- ProofPay 002: versioned agreements, milestones, criteria and mutual acceptance.
--- Requires 001 foundation. Run ONCE as postgres in Supabase SQL Editor.
--- Existing conflicting objects cause the entire transaction to roll back.
--- Saved versions are immutable. Every edit creates a new version.
 begin;
 
 create table public.agreements (

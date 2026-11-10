@@ -146,7 +146,6 @@ function ArchiveDialog({
       });
       if (!mounted.current) return;
       setConfirmed(true);
-      // A confirmed commit is never retried because a subsequent read fails.
       try {
         await refresh();
         notice(

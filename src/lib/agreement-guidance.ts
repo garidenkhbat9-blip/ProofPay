@@ -2,8 +2,6 @@ import { memberRole } from "./domain";
 import { projectTeam } from "./project-management";
 import type { CloudData, Project } from "./types";
 
-// Migration 002 allows unaccepted versions before assignment. Acceptance still
-// requires a joined freelancer and the latest immutable version on the server.
 export function agreementGuidance(
   data: CloudData,
   project: Project,

@@ -1,5 +1,3 @@
-// Metadata plus ONE tiny synthetic structured request. Never retries or calls PayPal.
-// No user data, complete response body, key or provider error message is logged.
 import { generateStructured, DEFAULT_GEMINI_MODEL, GeminiError } from "../src/lib/gemini";
 async function main() {
   const model = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;

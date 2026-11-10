@@ -87,7 +87,6 @@ export function verifyInvoice(p: Payment, invoice: PayPalInvoice) {
       status = providerTotal(invoice.refunds?.transactions, p.currency, true) === cents(p.amount) &&
         (!invoice.refunds?.refund_amount || (invoice.refunds.refund_amount.currency_code === p.currency && cents(invoice.refunds.refund_amount.value) === cents(p.amount))) ? "REFUNDED" : "REQUIRES_ATTENTION";
       break;
-    // Includes manually recorded/external payments and partial refunds.
     default: status = "REQUIRES_ATTENTION";
   }
   if (status === "UNPAID" && (invoice.payments?.transactions?.length ||

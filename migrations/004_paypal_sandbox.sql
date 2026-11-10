@@ -1,5 +1,3 @@
--- Forward-only. Apply ONCE after 001-003. No existing records are rewritten.
--- No merchant is enabled automatically. Ownership must be verified by an admin.
 begin;
 
 create table public.paypal_merchant_bindings (
@@ -93,7 +91,6 @@ grant select on public.payment_history to authenticated;
 create policy payments_member_read on public.payments for select to authenticated using(proofpay_private.is_member(project_id));
 create policy payment_history_member_read on public.payment_history for select to authenticated using(proofpay_private.is_member(project_id));
 
--- Service-only: actor is taken from server-verified Supabase Auth, never browser JSON.
 create function public.prepare_paypal_payment(p_actor uuid,p_project uuid,p_milestone uuid,p_merchant text,p_fingerprint text)
 returns public.payments language plpgsql security definer set search_path='' as $$
 declare
@@ -127,8 +124,6 @@ begin
  return result;
 end; $$;
 
--- A durable first-attempt marker is committed BEFORE the provider POST.
--- Crashes/timeouts never authorize a second create; they require search/recovery.
 create function public.claim_paypal_payment(p_id uuid,p_lease uuid,p_create boolean)
 returns jsonb language plpgsql security definer set search_path='' as $$
 declare p public.payments%rowtype; may_create boolean:=false;

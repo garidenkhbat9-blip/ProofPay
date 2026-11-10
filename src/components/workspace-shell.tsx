@@ -27,13 +27,10 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
     params = useSearchParams(),
     router = useRouter();
   const requestedPerspective = entryPerspective(path + "?" + params.toString());
-  // Only the fictional local demo is independent of workspace database loading.
-  // Auth checks above the workspace render remain identical for every route.
   const localPaymentDemo = path === "/payments/demo";
   useEffect(() => {
     if (!user || !requestedPerspective) return;
     setPerspective(requestedPerspective);
-    // Consume entry intent so refresh/back navigation cannot undo a later choice.
     if (path === "/dashboard") router.replace("/dashboard", { scroll: false });
   }, [user, requestedPerspective, setPerspective, path, router]);
   const [open, setOpen] = useState(false);
@@ -95,7 +92,6 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
       if (alive && document.visibilityState === "visible" && navigator.onLine)
         void sync();
     };
-    // No Realtime publication is assumed. Poll only an open, visible workspace.
     const interval = setInterval(check, 30000);
     window.addEventListener("focus", check);
     window.addEventListener("online", check);

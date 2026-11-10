@@ -1,6 +1,5 @@
 import { cents, type Payment } from "./payments/model";
 type SummaryPayment = Pick<Payment, "amount" | "currency" | "status" | "last_verified_at" | "reconciliation_status">;
-/** Invoice face values, never account balances or estimated earnings. */
 export function paymentSummary(rows: SummaryPayment[]) {
   let paid = 0, open = 0, invoiced = 0;
   for (const row of rows) {

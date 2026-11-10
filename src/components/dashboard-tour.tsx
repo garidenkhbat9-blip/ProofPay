@@ -98,13 +98,11 @@ export function DashboardTourDialog({ userId, perspective, onClose }: { userId: 
       }
       const viewport = window.visualViewport;
       const left = viewport?.offsetLeft || 0, top = viewport?.offsetTop || 0;
-      // The dialog excludes classic scrollbars; innerWidth/100vw include them.
       const width = Math.min(viewport?.width || window.innerWidth, (dialog.current?.clientWidth || document.documentElement.clientWidth) - left);
       const height = Math.min(viewport?.height || window.innerHeight, (dialog.current?.clientHeight || window.innerHeight) - top);
       panel.current.style.maxWidth = `${Math.max(0, width - 24)}px`;
       panel.current.style.maxHeight = `${Math.max(0, height - 24)}px`;
       const bounds = target?.getBoundingClientRect();
-      // Never leave a spotlight at old coordinates when a target disappears.
       const rect = bounds && bounds.bottom > top && bounds.top < top + height && bounds.right > left && bounds.left < left + width
         ? { left: Math.max(left + 4, bounds.left - 5), top: Math.max(top + 4, bounds.top - 5), width: Math.min(bounds.right + 5, left + width - 4) - Math.max(left + 4, bounds.left - 5), height: Math.min(bounds.bottom + 5, top + height - 4) - Math.max(top + 4, bounds.top - 5) } : null;
       const position = tourPlacement(rect, panel.current.getBoundingClientRect(), { width, height, left, top });

@@ -210,8 +210,6 @@ export async function reviewSubmissionText(
     }),
     signal,
   });
-  // A model call may take seconds. Do not publish it as current after terms,
-  // revision or a human decision changed while the provider was running.
   const [nowSubmission, nowAgreement, nowProject] = await Promise.all([
     client
       .from("evidence_submissions")

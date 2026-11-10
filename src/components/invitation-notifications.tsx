@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import { useWorkspace } from "./provider";
 import { invitationCountLabel, pendingInvitations } from "@/lib/invitation-notifications";
 
-// No separate data store or requests: every surface reads the workspace snapshot.
-// An expiry timer also removes expired items while offline, without a server read.
 export function useInvitationNotifications() {
   const { data, user, loaded, error } = useWorkspace();
   const [, tick] = useState(0);

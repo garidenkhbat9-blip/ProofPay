@@ -1,4 +1,3 @@
-/* ProofPay workspace tokens. Public pages retain the existing brand styling. */
 .workflow-empty { display: flex; align-items: flex-start; gap: 16px; padding: 24px; margin: 16px 0; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
 .workflow-empty-icon { display: grid; place-items: center; flex: 0 0 38px; height: 38px; border-radius: 10px; background: var(--sage); color: var(--accent); }
 .main .workflow-empty h2 { font-size: 18px; line-height: 1.4; margin: 0 0 8px; }

@@ -53,8 +53,6 @@ async function identity(client: SupabaseClient, expectedId: string) {
   return { user: verified.data.user, token };
 }
 
-// Pin the write to the verified token. Another tab changing accounts while
-// this request is in flight must never receive this preference.
 async function persist(token: string, userId: string, role: Role, record: TourRecord) {
   const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/user`, {
     method: "PUT",
@@ -77,7 +75,6 @@ export async function readTourPreference(client: SupabaseClient, userId: string,
     if (local) { await persist(token, userId, role, local); return "dismissed"; }
     return "show";
   } catch {
-    // Unknown is never treated as first visit. Failed saves retry next visit.
     return local ? "dismissed" : "unavailable";
   }
 }

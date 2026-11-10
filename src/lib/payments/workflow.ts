@@ -15,7 +15,6 @@ export interface PaymentStore {
 }
 export async function runPayment(store: PaymentStore, gateway: InvoiceGateway, original: Payment,
   options: { createAndSend: boolean; title: string; source: "api" | "webhook" | "reconcile" }) {
-  // Validate and authenticate before consuming the one allowed creation attempt.
   const body = invoiceBody(original, options.title);
   await gateway.authenticate();
   const lease = crypto.randomUUID();

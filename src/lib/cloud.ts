@@ -21,8 +21,6 @@ export async function loadCloud(client: SupabaseClient): Promise<CloudData> {
     const keys = table === "project_members" ? ["project_id", "user_id"]
       : table === "agreement_approvals" ? ["agreement_id", "role"] : ["id"];
     let total: number | null = null;
-    // Use the returned length, not the requested page size: deployments may
-    // impose a smaller REST row cap. Never publish a silently truncated snapshot.
     while (rows.length < 10000) {
       const columns: string = table === "payments" ? "id,project_id,milestone_id,agreement_id,submission_id,status,last_verified_at,reconciliation_status" : "*";
       let query = client.from(table).select(columns, { count: "exact" });
@@ -43,8 +41,6 @@ export async function loadCloud(client: SupabaseClient): Promise<CloudData> {
   }));
   for (const [index, result] of r.entries()) {
     if (!result.error) continue;
-    // Only absent optional schema is degradable. A network/permission failure
-    // must not replace a previously loaded workflow with partial empty arrays.
     if (index < 3 || !["42P01", "PGRST205"].includes(result.error.code))
       throw result.error;
   }
@@ -66,7 +62,7 @@ export async function loadCloud(client: SupabaseClient): Promise<CloudData> {
     invitationError: r[3].error ? errorMessage(r[3].error) : "",
     agreementError: r.slice(4, 8).some((x) => x.error) ? "Agreement storage is unavailable. Contact the project administrator." : "",
     deliveryError: r.slice(8, 12).some((x) => x.error) ? "Evidence storage is unavailable. Contact the project administrator." : "",
-  } as unknown as CloudData; // Supabase rows follow the versioned database schema.
+  } as unknown as CloudData;
 }
 export async function rpc<T = string>(
   client: SupabaseClient,
@@ -83,7 +79,6 @@ export function errorMessage(e: unknown): string {
     if (code === "42501") return "This account is not authorized for that action. Check your project membership and email verification.";
     if (["42P01", "PGRST205", "PGRST202"].includes(code)) return "Workspace storage is unavailable. Contact the project administrator.";
     if (["PGRST301", "PGRST303"].includes(code)) return "Your session has expired. Sign in again.";
-    // P0001 is an intentional, application-authored RPC validation message.
     if (code !== "P0001") return "The request could not be completed. Refresh and try again.";
   }
   return e && typeof e === "object" && "message" in e

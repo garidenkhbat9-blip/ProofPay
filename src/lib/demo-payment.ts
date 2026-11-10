@@ -1,4 +1,3 @@
-/** Fictional learning state. Deliberately has no financial/backend imports. */
 export const DEMO_PAYMENT = Object.freeze({
   project: "Demo Website Design",
   milestone: "Homepage UI Design",
