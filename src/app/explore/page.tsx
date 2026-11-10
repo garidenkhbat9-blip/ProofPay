@@ -24,10 +24,6 @@ export default function ExplorePage() {
       </header>
       <main id="judge-main" className="judge-main">
         <div className="judge-intro">
-          <span className="judge-eyebrow">
-            <span className="explore-signal" aria-hidden="true" /> WORK, WITH
-            PROOF.
-          </span>
           <h1>
             Explore <span>ProofPay</span>
           </h1>
@@ -107,12 +103,7 @@ export default function ExplorePage() {
           </p>
         </div>
         <section className="judge-guide" aria-labelledby="judge-guide-title">
-          <div>
-            <span className="judge-eyebrow">
-              A CLEAR PATH FROM WORK TO PAYMENT
-            </span>
-            <h2 id="judge-guide-title">Real work. A considered workflow.</h2>
-          </div>
+          <h2 id="judge-guide-title">Real work. A considered workflow.</h2>
           <ol>
             <li>
               <span>01</span>

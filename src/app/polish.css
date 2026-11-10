@@ -449,25 +449,6 @@
 .judge-intro {
   margin-bottom: 36px;
 }
-.judge-intro > .judge-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 12px;
-  border: 1px solid #dae6d8;
-  border-radius: 30px;
-  background: #fff9;
-  font-size: 10px;
-  letter-spacing: 1.8px;
-}
-.judge-intro .explore-signal {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #547a5b;
-  box-shadow: 0 0 0 3px #e6efe3;
-  margin: 0;
-}
 .judge-intro h1 {
   font-weight: 600;
   letter-spacing: -0.055em;
@@ -688,11 +669,24 @@
   .home-polish .featuresection {
     padding-top: 54px;
   }
-  .marketing .productmock { grid-template-columns: minmax(0, 1fr); }
-  .marketing .mockbody { min-width: 0; }
-  .marketing .mockbreadcrumb { flex-wrap: wrap; gap: 6px; }
-  .marketing .mocktabs { flex-wrap: wrap; gap: 12px; }
-  .marketing .mockdecision { flex-wrap: wrap; gap: 12px; }
+  .marketing .productmock {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .marketing .mockbody {
+    min-width: 0;
+  }
+  .marketing .mockbreadcrumb {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .marketing .mocktabs {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .marketing .mockdecision {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
   .judge-main {
     padding-top: 40px;
   }
@@ -746,9 +740,16 @@
   }
 }
 @media (max-width: 360px) {
-  .marketing .marketingnav { gap: 12px 8px; }
-  .marketing .marketingnav .forest .icon { display: none; }
-  .marketing .marketingnav .forest { padding: 10px; font-size: 11px; }
+  .marketing .marketingnav {
+    gap: 12px 8px;
+  }
+  .marketing .marketingnav .forest .icon {
+    display: none;
+  }
+  .marketing .marketingnav .forest {
+    padding: 10px;
+    font-size: 11px;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .account-popover,
@@ -762,4 +763,20 @@
     transition: none;
     transform: none;
   }
+}
+
+/* Section titles now lead directly; preserve spacing inside meaningful previews. */
+.marketing :is(.showhero, .pagehero) > h1:first-child,
+.marketing .centerheading > h2:first-child,
+.marketing .marketingcta > h2:first-child,
+.marketing .splitstory > div > h2:first-child,
+.marketing .homequestions > div > h2:first-child,
+.marketing .capabilitysection > div > h2:first-child,
+.marketing .faqcontent > aside > h2:first-child,
+.judge-intro > h1:first-child,
+.judge-guide > h2:first-child {
+  margin-top: 0;
+}
+.marketing .sectioncaption {
+  justify-content: flex-end;
 }

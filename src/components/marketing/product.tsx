@@ -21,7 +21,6 @@ export function ProductPage() {
         </div>
       </header>
       <section className={"pagehero"}>
-        <div className={"microtag"}>{"THE PROOFPAY PRODUCT"}</div>
         <h1>
           {"One place for the brief,"}
           <br />
@@ -41,7 +40,6 @@ export function ProductPage() {
       </section>
       <section className={"productpage-preview"}>
         <div className={"sectioncaption"}>
-          <span>{"INSIDE THE WORKSPACE"}</span>
           <span>{"Illustrative example"}</span>
         </div>
         <div
@@ -49,7 +47,9 @@ export function ProductPage() {
           aria-label={"Illustrative project workflow"}
         >
           <aside className={"mocknav"}>
-            <div className="pp-brand preview-brand"><BrandContents /></div>
+            <div className="pp-brand preview-brand">
+              <BrandContents />
+            </div>
             <span>{"Client workspace"}</span>
             <p>
               <svg
@@ -103,7 +103,6 @@ export function ProductPage() {
             </div>
             <div className={"mocktitle"}>
               <div>
-                <span className={"eyebrow"}>{"PROJECT WORKSPACE"}</span>
                 <h3>{"Website launch"}</h3>
                 <p>{"A shared definition of done."}</p>
               </div>
@@ -175,7 +174,6 @@ export function ProductPage() {
       </section>
       <section className={"featuresection"}>
         <div className={"centerheading"}>
-          <div className={"eyebrow"}>{"BUILT AROUND THE HANDOFF"}</div>
           <h2>{"Every part has a purpose."}</h2>
         </div>
         <div className={"featurebento"}>
@@ -390,7 +388,6 @@ export function ProductPage() {
       </section>
       <section className={"capabilitysection"}>
         <div>
-          <div className={"eyebrow"}>{"WHERE WE ARE TODAY"}</div>
           <h2>
             {"A working preview."}
             <br />
@@ -426,7 +423,6 @@ export function ProductPage() {
         </div>
       </section>
       <section className={"marketingcta"}>
-        <span className={"microtag"}>{"START WITH CLARITY"}</span>
         <h2>
           {"Make the next handoff"}
           <br />

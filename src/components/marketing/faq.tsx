@@ -21,7 +21,6 @@ export function FaqPage() {
         </div>
       </header>
       <section className={"pagehero"}>
-        <span className={"microtag"}>{"FREQUENTLY ASKED QUESTIONS"}</span>
         <h1>
           {"Good questions."}
           <br />
@@ -35,7 +34,6 @@ export function FaqPage() {
       </section>
       <section className={"faqcontent"}>
         <aside>
-          <span className={"eyebrow"}>{"A LITTLE MORE CLARITY"}</span>
           <h2>
             {"Before your"}
             <br />
@@ -145,7 +143,6 @@ export function FaqPage() {
         </div>
       </section>
       <section className={"marketingcta"}>
-        <span className={"microtag"}>{"START WITH CLARITY"}</span>
         <h2>
           {"Make the next handoff"}
           <br />

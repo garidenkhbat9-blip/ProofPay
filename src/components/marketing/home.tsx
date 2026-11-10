@@ -27,14 +27,6 @@ export function HomePage() {
       </header>
       <main id="home-main">
         <section className={"showhero"}>
-          <div className={"microtag"}>
-            <svg className={"icon"} viewBox={"0 0 24 24"} aria-hidden={"true"}>
-              <path
-                d={"M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3M8 12l3 3 5-6"}
-              ></path>
-            </svg>
-            {" FOR CLIENTS & FREELANCERS"}
-          </div>
           <h1>
             {"Great work deserves"}
             <br />
@@ -88,7 +80,6 @@ export function HomePage() {
         </section>
         <section className={"showcase"}>
           <div className={"sectioncaption"}>
-            <span>{"THE WORK, ALL IN ONE PLACE"}</span>
             <span>{"Illustrative product preview"}</span>
           </div>
           <div
@@ -152,7 +143,6 @@ export function HomePage() {
               </div>
               <div className={"mocktitle"}>
                 <div>
-                  <span className={"eyebrow"}>{"PROJECT WORKSPACE"}</span>
                   <h3>{"Website launch"}</h3>
                   <p>{"A shared definition of done."}</p>
                 </div>
@@ -261,7 +251,6 @@ export function HomePage() {
         </section>
         <section className={"featuresection"}>
           <div className={"centerheading"}>
-            <span className={"microtag"}>{"FROM BRIEF TO HANDOFF"}</span>
             <h2>
               {"The brief. The work."}
               <br />
@@ -489,7 +478,6 @@ export function HomePage() {
         </section>
         <section className={"splitstory"}>
           <div>
-            <div className={"eyebrow"}>{"ONE ACCOUNT. BOTH SIDES."}</div>
             <h2>
               {"Your role changes."}
               <br />
@@ -558,7 +546,6 @@ export function HomePage() {
         </section>
         <section className={"homequestions"}>
           <div>
-            <div className={"eyebrow"}>{"GOOD QUESTIONS. CLEAR ANSWERS."}</div>
             <h2>
               {"A little clarity"}
               <br />
@@ -595,7 +582,6 @@ export function HomePage() {
           </div>
         </section>
         <section className={"marketingcta"}>
-          <span className={"microtag"}>{"START WITH CLARITY"}</span>
           <h2>
             {"Make the next handoff"}
             <br />

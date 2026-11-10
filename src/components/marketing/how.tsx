@@ -21,7 +21,6 @@ export function HowPage() {
         </div>
       </header>
       <section className={"pagehero"}>
-        <span className={"microtag"}>{"HOW IT WORKS"}</span>
         <h1>
           {"A clear path."}
           <br />
@@ -209,7 +208,6 @@ export function HowPage() {
         </div>
       </section>
       <section className={"marketingcta"}>
-        <span className={"microtag"}>{"START WITH CLARITY"}</span>
         <h2>
           {"Make the next handoff"}
           <br />
