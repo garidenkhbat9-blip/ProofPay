@@ -1,4 +1,5 @@
 "use client";
+import { Brand } from "@/components/brand";
 import Link from "next/link";
 import { useEffect, useReducer, useRef, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
@@ -233,12 +234,7 @@ export function DemoWalkthrough({ onExplore }: { onExplore: () => void }) {
         >
           <Icon name="close" />
         </button>
-        <Link className="brand" href="/">
-          <span className="brandmark">
-            <Icon name="shield" />
-          </span>
-          ProofPay
-        </Link>
+        <Brand />
         <div className="workspace">
           <span className="avatar">KS</span>
           <strong>KlipScale workspace</strong>

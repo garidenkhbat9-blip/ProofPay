@@ -1,5 +1,5 @@
 "use client";
-import Image from "next/image";
+import { Brand } from "@/components/brand";
 import Link from "next/link";
 import {
   useEffect,
@@ -189,12 +189,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   return (
     <div className={`authpage auth-polished ${signup ? "auth-signup" : "auth-signin"}`}>
       <header>
-        <Link className="brand" href="/">
-          <span className="brandmark">
-            <Image src="/logo.png" alt="ProofPay logo" width={38} height={38} />
-          </span>
-          ProofPay
-        </Link>
+        <Brand />
         <Link href="/">Back to home →</Link>
       </header>
       <main className="authlayout">

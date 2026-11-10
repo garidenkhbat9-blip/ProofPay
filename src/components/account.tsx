@@ -13,11 +13,11 @@ export function SettingsPage() {
   return (
     <>
       <Heading title="Account" />
-      <section className="card">
+      <section className="card" id="profile" tabIndex={-1}>
         <h2>{workspaceIdentity(user, data.profiles).displayName}</h2>
         <p>{user?.email}</p>
         <FormMessage error={task.error} />
-        <label htmlFor="account-workspace">Workspace view</label>
+        <label id="preferences" htmlFor="account-workspace">Workspace view</label>
         <select id="account-workspace" value={perspective} disabled={task.busy || !user} onChange={event => {
           const role = event.target.value === "freelancer" ? "freelancer" : "client";
           void task.run(async () => {

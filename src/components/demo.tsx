@@ -1,4 +1,5 @@
 "use client";
+import { Brand } from "@/components/brand";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -118,9 +119,7 @@ function FreeformDemo() {
   return (
     <div className="demo-shell">
       <header className="topbar">
-        <Link className="brand" href="/">
-          ProofPay
-        </Link>
+        <Brand />
         <div className="actions">
           <label>
             <select

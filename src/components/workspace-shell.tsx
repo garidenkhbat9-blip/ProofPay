@@ -1,6 +1,7 @@
 "use client";
+import { Brand } from "@/components/brand";
+import { AccountMenu } from "./account-menu";
 import { InvitationBadge } from "./invitation-notifications";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
@@ -132,7 +133,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
       </main>
     );
   if (!user) return null;
-  const { displayName: name, initials } = workspaceIdentity(user, data.profiles);
+  const { displayName: name } = workspaceIdentity(user, data.profiles);
   const clientNav = [
     ["/dashboard", "grid", "Overview"],
     ["/projects", "folder", "Projects"],
@@ -173,12 +174,8 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
         aria-modal={mobile && open ? true : undefined}
         aria-label="Workspace navigation"
       >
-        <Link className="brand" href="/dashboard" onClick={() => setOpen(false)}>
-          <span className="brandmark">
-            <Image src="/logo.png" alt="ProofPay logo" width={38} height={38} />
-          </span>
-          ProofPay
-        </Link>
+        <Brand href="/dashboard" onClick={() => setOpen(false)} />
+        <button className="ghost mobileclose workspace-close" onClick={() => setOpen(false)} aria-label="Close menu"><Icon name="close" /></button>
         {nav.map(([href, icon, title]) => (
           <Link
             key={href}
@@ -200,20 +197,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
             <Icon name="gear" />
             Account & settings
           </Link>
-          <div className="user">
-            <span className="avatar">{initials}</span>
-            <div>
-              <strong>{name}</strong>
-              <small>{user.email}</small>
-            </div>
-            <button
-              className="ghost mobileclose"
-              onClick={() => setOpen(false)}
-              aria-label="Close menu"
-            >
-              <Icon name="close" />
-            </button>
-          </div>
+          <AccountMenu onNavigate={() => setOpen(false)} />
         </div>
       </aside>
       <main className="main" inert={mobile && open}>
@@ -240,6 +224,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
             </b>
           </div>
           <div className="topright">
+            <AccountMenu compact />
             <span className="tag">
               <i className="dot" />
               {perspective === "client" ? "Client" : "Freelancer"}

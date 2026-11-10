@@ -1,4 +1,5 @@
-﻿"use client";
+"use client";
+import { Brand } from "@/components/brand";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useWorkspace } from "@/components/provider";
@@ -38,7 +39,7 @@ export default function WorkspaceChoice() {
     finally { lock.current = false; setBusy(false); }
   }
   return <main className="workspace-onboarding-page"><section className="workspace-onboarding-card" aria-labelledby="workspace-title">
-    <Link className="brand" href="/">ProofPay</Link><h1 id="workspace-title">Choose your workspace</h1>
+    <Brand /><h1 id="workspace-title">Choose your workspace</h1>
     <p>Choose how you want to start. You can switch views later in Account.</p>
     {error && <p role="alert">{error} <Link href="/login">Sign in</Link></p>}
     {!ready || (user && checked !== user.id && !error) ? <p role="status">Checking your workspace…</p> : !user ? <Link href="/login">Sign in</Link> : checked === user.id && <>

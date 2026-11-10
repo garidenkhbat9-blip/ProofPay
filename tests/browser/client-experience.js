@@ -115,6 +115,8 @@ const {PaymentWorkspace}=load('src/components/payments');
 const {ActivityPage}=load('src/components/account');
 const {tourPreferenceKey}=load('src/lib/guided-tour');
 const root=load('react-dom/client').createRoot(document.getElementById('fixture-root'));
+let signOutCalls=0;
+workspace.signOut=async()=>{signOutCalls++;if(params.has('signOutFailure'))throw Error('Could not sign out. Please try again.');};
 let generation=0;
 let rendered={component:Dashboard,props:{}};
 function rerender(){root.render(React.createElement(WorkspaceShell,{key:generation},React.createElement(rendered.component,rendered.props)));}
@@ -127,6 +129,9 @@ const assert=(ok,message)=>{if(!ok)throw Error(message);};
 function button(text) {return [...document.querySelectorAll('button')].find(node=>node.textContent.trim()===text);}
 async function run() {
  localStorage.clear();
+ const publicViews={home:['src/components/marketing/home','HomePage'],explore:['src/app/explore/page','default'],product:['src/components/marketing/product','ProductPage'],how:['src/components/marketing/how','HowPage'],faq:['src/components/marketing/faq','FaqPage']};
+ if(publicViews[view]) {const [module,name]=publicViews[view];root.render(React.createElement(load(module)[name]));return;}
+
  if (view === 'onboarding') {
   root.render(React.createElement(load('src/app/auth/workspace/page').default)); return;
  }

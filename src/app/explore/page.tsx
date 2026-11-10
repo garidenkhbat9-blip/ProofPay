@@ -1,5 +1,5 @@
+import { Brand } from "@/components/brand";
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/ui";
 import { judgeDestination } from "@/lib/judge-access";
@@ -17,24 +17,24 @@ export default function ExplorePage() {
         Skip to content
       </a>
       <header className="judge-header">
-        <Link className="brand" href="/">
-          <span className="brandmark">
-            <Image src="/logo.png" alt="" width={38} height={38} />
-          </span>
-          ProofPay
-        </Link>
+        <Brand />
         <Link href="/how-it-works">
           How it works <span aria-hidden="true">↗</span>
         </Link>
       </header>
       <main id="judge-main" className="judge-main">
         <div className="judge-intro">
-          <span className="judge-eyebrow">PAYPAL AI HACKATHON 2026</span>
+          <span className="judge-eyebrow">
+            <span className="explore-signal" aria-hidden="true" /> WORK, WITH
+            PROOF.
+          </span>
           <h1>
             Explore <span>ProofPay</span>
           </h1>
           <h2>Choose your perspective</h2>
-          <p>Choose how you want to start, then sign in with Google or email.</p>
+          <p>
+            Choose how you want to start, then sign in with Google or email.
+          </p>
         </div>
         <div className="judge-choices">
           {(["client", "freelancer"] as const).map((role, i) => (
@@ -60,6 +60,36 @@ export default function ExplorePage() {
                   ? "Review agreements, inspect submitted work, and approve milestones."
                   : "Review invitations and agreements, submit evidence, and track payment status."}
               </p>
+              <div
+                className="perspective-preview"
+                aria-label={`${role === "client" ? "Client" : "Freelancer"} workflow preview`}
+              >
+                <span className="perspective-preview-label">
+                  YOUR SIDE OF THE WORKFLOW
+                </span>
+                {(role === "client"
+                  ? [
+                      "Define the outcome",
+                      "Review the evidence",
+                      "Record your decision",
+                    ]
+                  : [
+                      "Align on the scope",
+                      "Deliver with evidence",
+                      "Track every milestone",
+                    ]
+                ).map((step, index) => (
+                  <div key={step}>
+                    <span className="perspective-step">0{index + 1}</span>
+                    <span>{step}</span>
+                    <Icon
+                      name={
+                        index === 0 ? "report" : index === 1 ? "link" : "check"
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
               <div className="judge-choice-bottom">
                 <span id={`${role}-continue`}>
                   Continue as {role === "client" ? "Client" : "Freelancer"}
@@ -72,8 +102,8 @@ export default function ExplorePage() {
         <div className="judge-access-note">
           <Icon name="shield" />
           <p id="explore-auth-note">
-            Sign in with your own account. Choosing a workspace
-            does not sign you in, switch accounts, or grant project access.
+            Sign in with your own account. Choosing a workspace does not sign
+            you in, switch accounts, or grant project access.
           </p>
         </div>
         <section className="judge-guide" aria-labelledby="judge-guide-title">

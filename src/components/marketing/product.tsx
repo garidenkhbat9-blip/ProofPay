@@ -1,18 +1,10 @@
+import { Brand, BrandContents } from "@/components/brand";
 import Link from "next/link";
 export function ProductPage() {
   return (
     <div className={"marketing"}>
       <header className={"marketingnav"}>
-        <Link className={"brand"} href={"/"}>
-          <span className={"brandmark"}>
-            <svg className={"icon"} viewBox={"0 0 24 24"} aria-hidden={"true"}>
-              <path
-                d={"M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3M8 12l3 3 5-6"}
-              ></path>
-            </svg>
-          </span>
-          {"ProofPay"}
-        </Link>
+        <Brand />
         <nav aria-label={"Main navigation"}>
           <Link href={"/"}>{"Home"}</Link>
           <Link href={"/product"}>{"Product"}</Link>
@@ -57,18 +49,7 @@ export function ProductPage() {
           aria-label={"Illustrative project workflow"}
         >
           <aside className={"mocknav"}>
-            <div>
-              <svg
-                className={"icon"}
-                viewBox={"0 0 24 24"}
-                aria-hidden={"true"}
-              >
-                <path
-                  d={"M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3M8 12l3 3 5-6"}
-                ></path>
-              </svg>
-              <b>{"ProofPay"}</b>
-            </div>
+            <div className="pp-brand preview-brand"><BrandContents /></div>
             <span>{"Client workspace"}</span>
             <p>
               <svg
@@ -465,20 +446,7 @@ export function ProductPage() {
       </section>
       <footer className={"marketingfooter"}>
         <div>
-          <Link className={"brand"} href={"/"}>
-            <span className={"brandmark"}>
-              <svg
-                className={"icon"}
-                viewBox={"0 0 24 24"}
-                aria-hidden={"true"}
-              >
-                <path
-                  d={"M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3M8 12l3 3 5-6"}
-                ></path>
-              </svg>
-            </span>
-            {"ProofPay"}
-          </Link>
+          <Brand />
           <p>
             {"Clear expectations."}
             <br />

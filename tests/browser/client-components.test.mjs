@@ -12,7 +12,7 @@ const artifacts = resolve('.validation/client-experience');
 const fixture = pathToFileURL(join(artifacts, 'preview.html')).href;
 const chrome = process.env.CHROME_PATH || 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe';
 
-test('client workspace components: desktop/mobile tour, actions and responsive layouts', { timeout: 90000, skip: process.platform !== 'win32' || !existsSync(chrome) ? 'Component fixture builder requires Windows and Chrome; unit tests still run.' : false }, async () => {
+test('client workspace components: desktop/mobile tour, actions and responsive layouts', { timeout: 120000, skip: process.platform !== 'win32' || !existsSync(chrome) ? 'Component fixture builder requires Windows and Chrome; unit tests still run.' : false }, async () => {
   execFileSync('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'scripts/preview-client-experience.ps1'], { stdio: 'pipe', windowsHide: true });
   const profile = await mkdtemp(join(artifacts, 'cdp-profile-'));
   // Opt-in only for these local fixtures in restricted Windows runners.
@@ -68,6 +68,11 @@ test('client workspace components: desktop/mobile tour, actions and responsive l
     };
     await send('Runtime.enable');
     const cases = [
+      ...['home','explore','product','how','faq'].flatMap(view=>[1440,390,320].map(width=>[`public-${view}-${width}`,`view=${view}`,width,1100])),
+      ['account-client','view=dashboard',1440,1000],
+      ['account-freelancer','view=dashboard&role=freelancer',390,844],
+      ['account-sidebar-mobile','view=dashboard',320,740],
+      ['account-signout-error','view=dashboard&signOutFailure=1',1440,1000],
       ['login-otp-client','view=login&otp=1&intent=client',1440,1100],
       ['login-otp-freelancer','view=login&otp=1&intent=freelancer',390,1100],
       ...[1440,1024,768,390,320].map(width=>[`demo-${width}`,width===1440?'view=demopayment':'view=demopayment&empty=1',width,1200]),
@@ -143,6 +148,31 @@ test('client workspace components: desktop/mobile tour, actions and responsive l
     for (const [name, query, width, height] of cases) {
       await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
       await send('Page.navigate', { url: `${fixture}?${query}&case=${name}` });
+      if(name.startsWith('public-')) {
+        await waitFor(`location.search.includes('case=${name}') && !!document.querySelector('.pp-brand') && !!document.querySelector('h1')`);
+        await evaluate('document.fonts.ready');
+        await delay(750);
+        assert(await evaluate('document.documentElement.scrollWidth <= innerWidth'),`${name}: horizontal overflow`);
+        assert(await evaluate(`[...document.querySelectorAll('.pp-brand-icon img')].every(img=>img.complete && img.naturalWidth>0)`));
+        assert.equal(await evaluate(`document.querySelectorAll('h1').length`),1);
+        if(name.includes('explore')) {
+          const destinations=await evaluate(`[...document.querySelectorAll('.judge-choice')].map(a=>a.getAttribute('href'))`);
+          assert.deepEqual(destinations,['/login?next=%2Fdashboard%3Fperspective%3Dclient','/login?next=%2Fdashboard%3Fperspective%3Dfreelancer']);
+        }
+        if(name.includes('home')) assert.equal(await evaluate(`document.querySelector('.herobuttons a').getAttribute('href')`),'/explore');
+        const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
+        await writeFile(join(artifacts,`${name}.png`),Buffer.from(shot.data,'base64'));
+        if(name==='public-home-1440') {
+          await evaluate(`document.querySelector('.featuresection').scrollIntoView()`);await delay(350);
+          const section=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
+          await writeFile(join(artifacts,'home-features.png'),Buffer.from(section.data,'base64'));
+          await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
+          assert.equal(await evaluate(`getComputedStyle(document.querySelector('.showhero h1')).animationName`),'none');
+          await send('Emulation.setEmulatedMedia',{features:[]});
+        }
+        assert.equal(browserErrors.length,0,browserErrors.join('\n'));
+        results.push({name,overflow:false,logo:'loaded',navigation:'preserved'});continue;
+      }
       const authCase = name.startsWith('login') || name.startsWith('signup');
       if(name==='demo-signedout') {
         await waitFor(`location.search.includes('case=${name}') && typeof demoRedirect !== 'undefined' && demoRedirect.startsWith('/login?next=')`);
@@ -152,6 +182,50 @@ test('client workspace components: desktop/mobile tour, actions and responsive l
         results.push({name,authentication:'existing login redirect; no demo controls'});continue;
       }
       await waitFor(`location.search.includes('case=${name}') && !!document.querySelector('${authCase ? '.authcard .google-auth-button' : name.startsWith('onboarding') ? '.workspace-options' : '#workspace-main'}')`);
+      if(name.startsWith('account-')) {
+        if(name==='account-sidebar-mobile') {
+          await evaluate(`document.querySelector('.mobiletoggle').click()`);
+          await waitFor(`document.querySelector('.sidebar').getAttribute('aria-modal')==='true'`);
+        }
+        const selector=name==='account-sidebar-mobile'?'.sidebar .account-trigger':'.topbar .account-trigger';
+        await evaluate(`document.querySelector('${selector}').focus()`);
+        await send('Input.dispatchKeyEvent',{type:'keyDown',key:'ArrowDown',code:'ArrowDown',windowsVirtualKeyCode:40});
+        await waitFor(`!!document.querySelector('[role="menu"]')`);
+        assert.equal(await evaluate(`document.activeElement.textContent`),'Account / Profile');
+        await send('Input.dispatchKeyEvent',{type:'keyDown',key:'End',code:'End',windowsVirtualKeyCode:35});
+        assert.equal(await evaluate('document.activeElement.textContent'),'Sign out');
+        await send('Input.dispatchKeyEvent',{type:'keyDown',key:'ArrowDown',code:'ArrowDown',windowsVirtualKeyCode:40});
+        assert.equal(await evaluate('document.activeElement.textContent'),'Account / Profile');
+        await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
+        await waitFor(`!document.querySelector('[role="menu"]')`);
+        assert(await evaluate(`document.activeElement===document.querySelector('${selector}')`));
+        if(name==='account-sidebar-mobile') {
+          assert.equal(await evaluate(`document.querySelector('.sidebar').getAttribute('aria-modal')`),'true');
+          assert(await evaluate(`(()=>{const el=document.querySelector('.workspace-close'),r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2))})()`),'Mobile navigation close button must not be covered by the topbar');
+        }
+        await evaluate(`document.querySelector('${selector}').click()`);
+        await waitFor(`!!document.querySelector('[role="menu"]')`);
+        await evaluate(`document.querySelector('.pp-brand').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}))`);
+        await waitFor(`!document.querySelector('[role="menu"]')`);
+        await evaluate(`document.querySelector('${selector}').click()`);
+        await waitFor(`!!document.querySelector('[role="menu"]')`);
+        await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
+        await waitFor(`!document.querySelector('[role="menu"]')`);
+        await evaluate(`document.querySelector('${selector}').click()`);
+        await waitFor(`!!document.querySelector('[role="menu"]')`);
+        assert.equal(await evaluate(`document.querySelector('[role="menuitem"]').getAttribute('href')`),'/settings#profile');
+        await delay(200);
+        assert(await evaluate(`(()=>{const r=document.querySelector('.account-popover').getBoundingClientRect();return r.left>=0 && r.right<=innerWidth && r.top>=0 && r.bottom<=innerHeight})()`),`${name}: menu outside viewport`);
+        const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
+        await writeFile(join(artifacts,`${name}.png`),Buffer.from(shot.data,'base64'));
+        await evaluate(`document.querySelector('[role="menu"] button').click();document.querySelector('[role="menu"] button')?.click()`);
+        await waitFor('signOutCalls===1');
+        if(name==='account-signout-error') await waitFor(`!!document.querySelector('.account-popover [role="alert"]')`);
+        else await waitFor(`!document.querySelector('[role="menu"]')`);
+        assert.equal(await evaluate('signOutCalls'),1);
+        assert.equal(browserErrors.length,0,browserErrors.join('\n'));
+        results.push({name,keyboard:true,outside:true,signOutCalls:1});continue;
+      }
       if(name.startsWith('login-otp')) {
         await evaluate(`button('Sign in without a password').click()`);
         await waitFor(`!!document.querySelector('#reviewer-email')`);
